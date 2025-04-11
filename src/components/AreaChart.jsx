@@ -48,6 +48,7 @@ export function AreaChart({ series, labels }) {
       options={areaChartData.options}
       series={areaChartData.series}
       type="area"
+      height={280}
     />
   );
 }

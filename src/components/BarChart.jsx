@@ -59,6 +59,7 @@ export function BarChart({ series, labels }) {
       options={barChartData.options}
       series={barChartData.series}
       type="bar"
+      height={280}
     />
   );
 }
