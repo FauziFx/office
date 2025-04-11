@@ -16,8 +16,8 @@ const UseFormStore = create((set) => ({
     place_of_birth: "",
     date_of_birth: "",
     occupation: "",
-    opticId: Cookies.get("token")
-      ? jwtDecode(Cookies.get("token")).opticId
+    opticId: Cookies.get("accessToken")
+      ? jwtDecode(Cookies.get("accessToken")).opticId
       : "",
     conditions: [],
   },
@@ -36,8 +36,8 @@ const UseFormStore = create((set) => ({
         place_of_birth: "",
         date_of_birth: "",
         occupation: "",
-        opticId: Cookies.get("token")
-          ? jwtDecode(Cookies.get("token")).opticId
+        opticId: Cookies.get("accessToken")
+          ? jwtDecode(Cookies.get("accessToken")).opticId
           : "",
         conditions: [],
       },
@@ -119,8 +119,8 @@ const UseFormStore = create((set) => ({
     near_pd: "",
     visit_date: dayjs().format("YYYY-MM-DD"),
     checked_by: "",
-    opticId: Cookies.get("token")
-      ? jwtDecode(Cookies.get("token")).opticId
+    opticId: Cookies.get("accessToken")
+      ? jwtDecode(Cookies.get("accessToken")).opticId
       : "",
     is_olddata: 0,
     note: "",
@@ -158,8 +158,8 @@ const UseFormStore = create((set) => ({
         near_pd: "",
         visit_date: dayjs().format("YYYY-MM-DD"),
         checked_by: "",
-        opticId: Cookies.get("token")
-          ? jwtDecode(Cookies.get("token")).opticId
+        opticId: Cookies.get("accessToken")
+          ? jwtDecode(Cookies.get("accessToken")).opticId
           : "",
         is_olddata: 0,
         note: "",

@@ -9,7 +9,7 @@ import NotFound from "@/pages/NotFound";
 import Cookies from "js-cookie";
 
 const App = () => {
-  const token = Cookies.get("token") ? true : false;
+  const token = Cookies.get("accessToken") ? true : false;
   return (
     <Routes>
       <Route

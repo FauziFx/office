@@ -6,9 +6,9 @@ import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
 
 export function DashboardNavbar({ setIsChecked }) {
-  const userName = Cookies.get("user")
-    ? Cookies.get("user")
-    : jwtDecode(Cookies.get("token")).name;
+  const userName = Cookies.get("dataUser")
+    ? Cookies.get("dataUser")
+    : jwtDecode(Cookies.get("accessToken")).name;
   const navigate = useNavigate();
   return (
     <div className="navbar bg-transparent py-0">
@@ -85,8 +85,8 @@ export function DashboardNavbar({ setIsChecked }) {
             <li>
               <button
                 onClick={() => {
-                  Cookies.remove("token");
-                  Cookies.remove("user");
+                  Cookies.remove("accessToken");
+                  Cookies.remove("dataUser");
                   navigate("/login");
                 }}
               >

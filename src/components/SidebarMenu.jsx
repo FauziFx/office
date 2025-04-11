@@ -3,8 +3,8 @@ import { Link } from "react-router-dom";
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
 
-const userRole = Cookies.get("token")
-  ? jwtDecode(Cookies.get("token")).role
+const userRole = Cookies.get("accessToken")
+  ? jwtDecode(Cookies.get("accessToken")).role
   : "";
 export const SidebarMenu = (menuItems, setIsChecked, currentPath) => {
   return (

@@ -7,11 +7,11 @@ import Swal from "sweetalert2";
 
 export function Profile() {
   const [isLoadingSave, setIsLoadingSave] = React.useState(false);
-  const token = Cookies.get("token");
+  const token = Cookies.get("accessToken");
   const decode = jwtDecode(token);
   const [user, setUser] = React.useState({
     id: decode.id,
-    name: Cookies.get("user") ? Cookies.get("user") : decode.name,
+    name: Cookies.get("dataUser") ? Cookies.get("dataUser") : decode.name,
     email: decode.email,
     role: decode.role,
     status: decode.status,
@@ -75,7 +75,7 @@ export function Profile() {
           password: "",
           confirmPassword: "",
         });
-        Cookies.set("user", formData.name, { expires: 90 });
+        Cookies.set("dataUser", formData.name, { expires: 90 });
         Swal.fire(response.data.message);
       }
     } catch (error) {

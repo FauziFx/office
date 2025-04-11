@@ -8,7 +8,7 @@ const api = axios.create({
 // Add a request interceptor
 api.interceptors.request.use(
   (config) => {
-    const token = Cookies.get("token");
+    const token = Cookies.get("accessToken");
     if (token) {
       config.headers.Authorization = token;
     }
@@ -25,7 +25,7 @@ api.interceptors.response.use(
 
     // If the error status is 401
     if (error.response.status === 401 && !originalRequest._retry) {
-      Cookies.remove("token");
+      Cookies.remove("accessToken");
       window.location.href = "/login";
     }
 

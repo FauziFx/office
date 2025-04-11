@@ -9,7 +9,7 @@ import Cookies from "js-cookie";
 import Swal from "sweetalert2";
 
 export function Users() {
-  const idLoggedIn = jwtDecode(Cookies.get("token")).id;
+  const idLoggedIn = jwtDecode(Cookies.get("accessToken")).id;
   const { mutate } = useSWRConfig();
   const fetcher = async (url) => {
     try {

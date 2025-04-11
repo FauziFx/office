@@ -24,7 +24,7 @@ export function Login() {
 
       if (response.data.success) {
         const { token } = data.data;
-        Cookies.set("token", token, { expires: 89 });
+        Cookies.set("accessToken", token, { expires: 89 });
         window.location.href = "/dashboard";
       } else {
         setLoading(false);
