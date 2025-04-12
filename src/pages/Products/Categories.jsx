@@ -6,34 +6,171 @@ import {
   Settings,
   Trash2,
 } from "lucide-react";
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { Fragment, useState } from "react";
+import { LoadingTable } from "@/components";
+import api from "@/utils/api";
+import useSWR, { useSWRConfig } from "swr";
+import Swal from "sweetalert2";
 
 export function Categories() {
-  const [openRow, setOpenRow] = useState(null); // Menyimpan ID baris yang terbuka
-  const toggleRow = (rowId) => {
-    setOpenRow(openRow === rowId ? null : rowId); // Buka/tutup baris
+  const [dataCategory, setDataCategory] = useState({
+    id: "",
+    name: "",
+    parentId: "",
+  });
+
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [showParentCategory, setShowParentCategory] = useState(false);
+  const [categoryType, setCategoryType] = useState("main");
+
+  const handleChange = (e) => {
+    const name = e.target.name;
+    const value = e.target.value;
+
+    setDataCategory({
+      ...dataCategory,
+      [name]: value,
+    });
   };
+
+  const [openRow, setOpenRow] = useState(null);
+  const toggleRow = (rowId) => {
+    setOpenRow(openRow === rowId ? null : rowId);
+  };
+  const [type, setType] = useState("");
+  const { mutate } = useSWRConfig();
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (isEditMode) {
+      updateCategory(dataCategory.id, dataCategory);
+    } else {
+      addNewCategory(dataCategory);
+    }
+  };
+
+  const addNewCategory = async (data) => {
+    try {
+      const response = await api.post("/categories", {
+        name: data.name,
+        parentId: data.parentId != "" ? data.parentId : null,
+      });
+
+      if (response.data.success) {
+        Swal.fire(response.data.message);
+        mutate(`/categories?${query.toString()}`);
+        document.getElementById("add_category").close();
+        setDataCategory({ id: "", name: "", parentId: "" });
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const updateCategory = async (id, data) => {
+    try {
+      const response = await api.patch("/categories/" + id, {
+        name: data.name,
+        parentId: data.parentId != "" ? data.parentId : null,
+      });
+
+      if (response.data.success) {
+        Swal.fire(response.data.message);
+        mutate(`/categories?${query.toString()}`);
+        document.getElementById("add_category").close();
+        setDataCategory({ id: "", name: "", parentId: "" });
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleUpdate = (id, name, parentId) => {
+    setDataCategory({
+      id: id,
+      name: name,
+      parentId: parentId ? parentId : "",
+    });
+    if (parentId) {
+      setShowParentCategory(true);
+      setCategoryType("sub");
+      setShowParentCategory(true);
+    } else {
+      setShowParentCategory(true);
+      setCategoryType("main");
+      setShowParentCategory(false);
+    }
+    setIsEditMode(true);
+    document.getElementById("add_category").showModal();
+  };
+
+  const handleDelete = (id) => {
+    Swal.fire({
+      title: "Deleted Category?",
+      showDenyButton: true,
+      showCancelButton: true,
+      showConfirmButton: false,
+      denyButtonText: `Yes, Deleted`,
+    }).then((result) => {
+      // Confirm Delete
+      if (result.isDenied) {
+        deleteCategory(id);
+      }
+    });
+  };
+
+  const deleteCategory = async (id) => {
+    try {
+      const response = await api.delete(`/categories/${id}`);
+
+      if (response.data.success) {
+        mutate(`/categories?${query.toString()}`);
+        Swal.fire(response.data.message);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const query = new URLSearchParams({});
+  if (type) query.append("type", type);
+
+  const fetcher = async (url) => {
+    try {
+      const response = await api.get(url);
+
+      return response.data.data;
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const { data, error, isLoading } = useSWR(
+    `/categories?${query.toString()}`,
+    fetcher
+  );
+
+  if (error) return <p>Error loading data.</p>;
+
   return (
     <div>
       <h1 className="text-xl font-bold mb-4">Categories</h1>
       <div className="card bg-white shadow-md p-4">
         <div className="flex flex-col md:flex-row gap-2 md:items-center justify-between">
           <select
-            // value={opticId}
-            // onChange={(e) => setOpticId(e.target.value)}
+            value={type}
+            onChange={(e) => setType(e.target.value)}
             className="select select-sm shadow w-full md:w-1/4"
           >
-            <option value="">Type</option>
-            {/* {optic.length >= 1 &&
-              optic.map((item, index) => (
-                <option key={index} value={item.id}>
-                  {item.optic_name}
-                </option>
-              ))} */}
+            <option value="">All Type</option>
+            <option value="main">Main Category</option>
+            <option value="sub">Sub Category</option>
           </select>
           <button
-            onClick={() => document.getElementById("add_category").showModal()}
+            onClick={() => {
+              document.getElementById("add_category").showModal();
+              setIsEditMode(false);
+            }}
             className="btn btn-primary btn-sm w-full md:w-auto"
           >
             <Plus className="w-4 h-4 mr-2" /> Add Category
@@ -69,140 +206,49 @@ export function Categories() {
           </thead>
           {/* Body */}
           <tbody>
-            <tr>
-              <td className="border-b border-gray-200" width="1%">
-                <button
-                  className="btn btn-xs btn-ghost btn-circle my-1"
-                  onClick={() => toggleRow(1)}
-                >
-                  {openRow === 1 ? (
-                    <CircleMinus className="h-4 w-4 cursor-pointer text-error" />
-                  ) : (
-                    <CirclePlus className="h-4 w-4 cursor-pointer text-primary" />
-                  )}
-                </button>
-              </td>
-              <td className="border-b border-gray-200">
-                <p className="text-xs font-semibold capitalize">Kategori</p>
-              </td>
-              <td className="border-b border-gray-200">Main</td>
-              <td className="border-b border-gray-200">
-                <p className="text-xs text-gray-500 font-light">Main Cat</p>
-              </td>
-              <td className="border-b border-gray-200">10</td>
-              <td className="border-b border-gray-200">
-                <Link
-                  className="btn btn-xs btn-ghost btn-circle text-success tooltip mr-2"
-                  data-tip="Edit"
-                >
-                  <Pencil className="h-4 w-4" />
-                </Link>
-                <Link
-                  className="btn btn-xs btn-ghost btn-circle text-error tooltip"
-                  data-tip="Delete"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Link>
-              </td>
-            </tr>
-            {openRow === 1 && (
-              <tr className="bg-gray-100">
-                <td className="border border-gray-300 px-6 py-2" colSpan={6}>
-                  <ul className="list-disc">
-                    <li>Sub1</li>
-                    <li>Sub2</li>
-                    <li>Sub3</li>
-                  </ul>
-                </td>
-              </tr>
-            )}
-            {/* {!isLoadingPatient ? (
-              dataPatient.data.map(
-                (
-                  {
-                    id,
-                    name,
-                    address,
-                    phone_number,
-                    date_of_birth,
-                    gender,
-                    optic,
-                    createdAt,
-                    medicalconditions,
-                  },
-                  index
-                ) => (
-                  <tr key={index}>
-                    <td className="border-b border-gray-200">
-                      {(page - 1) * limit + index + 1}
-                    </td>
-                    <td className="border-b border-gray-200">
-                      <p className="text-xs font-semibold capitalize">
-                        {name.toLowerCase()}
-                      </p>
-                      <p className="text-xs text-gray-500 font-light">
-                        {phone_number}
-                      </p>
-                    </td>
-                    <td className="border-b border-gray-200 text-center">
-                      <p className="text-xs font-semibold">
-                        {gender == "Perempuan" ? "P" : "L"}
-                      </p>
-                      <p className="text-xs text-gray-500 font-light">
-                        {dayjs().diff(
-                          dayjs(date_of_birth.split("T")[0]),
-                          "year"
-                        )}{" "}
-                        Thn
-                      </p>
-                    </td>
-                    <td className="border-b border-gray-200">
-                      <p className="text-xs text-gray-700 font-semibold">
-                        {address}
-                      </p>
-                    </td>
-                    <td className="border-b border-gray-200">
-                      <ul className="list-inside list-disc">
-                        {medicalconditions &&
-                          medicalconditions.map(({ name }, index2) => (
-                            <li key={index2}>{name}</li>
-                          ))}
-                      </ul>
-                    </td>
-                    <td className="border-b border-gray-200">
-                      <p className="text-xs font-semibold text-gray-700">
-                        {optic.optic_name}
-                      </p>
-                      <p className="text-xs text-gray-500 font-light">
-                        {dayjs(createdAt)
-                          .tz("Asia/Jakarta")
-                          .format("DD-MM-YYYY")}
-                      </p>
-                    </td>
-                    <td className="w-28 flex justify-end">
-                      <Link
-                        to="/medical-record/add-medical-record"
-                        state={{ patientId: id, prevPage: location.pathname }}
-                        className="btn btn-xs btn-ghost btn-circle text-neutral tooltip"
-                        data-tip="Add Medical Record"
-                      >
-                        <FilePlus className="h-4 w-4" />
-                      </Link>
-                      <Link
-                        to={`/medical-record/patients/${id}`}
-                        className="btn btn-xs btn-ghost btn-circle text-info tooltip"
-                        data-tip="Detail"
-                      >
-                        <Info className="h-4 w-4" />
-                      </Link>
-                      <Link
-                        to={`/medical-record/edit-patient-data/${id}`}
-                        className="btn btn-xs btn-ghost btn-circle text-success tooltip"
-                        data-tip="Edit"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Link>
-                      {userRole == "admin" && (
+            {isLoading ? (
+              <LoadingTable row="8" colspan="6" />
+            ) : (
+              data.map(
+                ({ id, name, parentId, parent, subCategories }, index) => (
+                  <Fragment key={index}>
+                    <tr>
+                      <td className="border-b border-gray-200" width="1%">
+                        {subCategories.length > 0 && (
+                          <button
+                            className="btn btn-xs btn-ghost btn-circle my-1"
+                            onClick={() => toggleRow(id)}
+                          >
+                            {openRow === id ? (
+                              <CircleMinus className="h-4 w-4 cursor-pointer text-error" />
+                            ) : (
+                              <CirclePlus className="h-4 w-4 cursor-pointer text-primary" />
+                            )}
+                          </button>
+                        )}
+                      </td>
+                      <td className="border-b border-gray-200">
+                        <p className="text-xs font-semibold capitalize">
+                          {name}
+                        </p>
+                      </td>
+                      <td className="border-b border-gray-200">
+                        {parentId ? "Sub" : "Main"}
+                      </td>
+                      <td className="border-b border-gray-200">
+                        <p className="text-xs text-gray-500 font-normal">
+                          {parent && parent.name}
+                        </p>
+                      </td>
+                      <td className="border-b border-gray-200">10</td>
+                      <td className="border-b border-gray-200">
+                        <button
+                          className="btn btn-xs btn-ghost btn-circle text-success tooltip mr-2"
+                          data-tip="Edit"
+                          onClick={() => handleUpdate(id, name, parentId)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
                         <button
                           className="btn btn-xs btn-ghost btn-circle text-error tooltip"
                           data-tip="Delete"
@@ -210,14 +256,31 @@ export function Categories() {
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
-                      )}
-                    </td>
-                  </tr>
+                      </td>
+                    </tr>
+                    {subCategories.length > 0 && openRow === id && (
+                      <tr className="bg-gray-100">
+                        <td
+                          className="border border-gray-300 px-6 py-2"
+                          colSpan={6}
+                        >
+                          <span className="font-bold  ">Sub Category</span>
+                          <ul className="list-disc pl-3">
+                            {subCategories.map((item, index) => (
+                              <li key={index}>
+                                <div className="badge badge-xs badge-ghost">
+                                  {item.name}
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
                 )
               )
-            ) : (
-              <LoadingTable row="10" colspan="7" />
-            )} */}
+            )}
           </tbody>
         </table>
       </div>
@@ -225,23 +288,13 @@ export function Categories() {
       {/* Modal Add Category */}
       <dialog id="add_category" className="modal">
         <div className="modal-box md:px-12">
-          <h3 className="font-bold mb-4">Add Category</h3>
+          <h3 className="font-bold mb-4">
+            {isEditMode ? "Edit Category" : "Add Category"}
+          </h3>
           {/* Form */}
           <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              const form = e.target;
-              const data = {
-                name: form.name.value,
-                type: form.type.value,
-                parent_id:
-                  form.type.value === "sub" ? form.parent_id.value : null,
-              };
-              // Kirim data ke handler
-              console.log("Submit category:", data);
-              form.reset();
-              //   document.getElementById("add_category").close();
-            }}
+            id="form_add_category"
+            onSubmit={handleSubmit}
             className="flex flex-col justify-center"
           >
             {/* Category Name */}
@@ -249,8 +302,12 @@ export function Categories() {
               <legend className="fieldset-legend">Category Name</legend>
               <input
                 type="text"
+                name="name"
                 className="input input-sm w-full"
                 placeholder="e.g. Single Vision"
+                value={dataCategory.name}
+                onChange={(e) => handleChange(e)}
+                required
               />
             </fieldset>
 
@@ -258,18 +315,19 @@ export function Categories() {
             <fieldset className="fieldset w-full">
               <legend className="fieldset-legend">Type</legend>
               <select
-                name="type"
                 className="select select-bordered select-sm w-full"
-                defaultValue="main"
+                value={categoryType}
                 onChange={(e) => {
-                  const parentWrapper = document.getElementById(
-                    "parent_category_wrapper"
-                  );
                   if (e.target.value === "sub") {
-                    parentWrapper.classList.remove("hidden");
+                    setShowParentCategory(true);
                   } else {
-                    parentWrapper.classList.add("hidden");
+                    setShowParentCategory(false);
+                    setDataCategory({
+                      ...dataCategory,
+                      parentId: "",
+                    });
                   }
+                  setCategoryType(e.target.value);
                 }}
               >
                 <option value="main">Main</option>
@@ -279,17 +337,27 @@ export function Categories() {
 
             {/* Parent Category */}
             <fieldset
-              className="fieldset w-full hidden"
-              id="parent_category_wrapper"
+              className={`fieldset w-full ${
+                showParentCategory ? "" : "hidden"
+              }`}
             >
               <legend className="fieldset-legend">Parent Category</legend>
               <select
-                name="type"
+                name="parentId"
                 className="select select-bordered select-sm w-full"
-                defaultValue="main"
+                value={dataCategory.parentId}
+                onChange={(e) => handleChange(e)}
+                required={showParentCategory}
               >
-                <option value="main">Lensa</option>
-                <option value="sub">Frame</option>
+                <option value="">Parent Category</option>
+                {!isLoading &&
+                  data
+                    .filter((item) => item.parentId === null)
+                    .map(({ id, name }, index) => (
+                      <option key={index} value={id}>
+                        {name}
+                      </option>
+                    ))}
               </select>
             </fieldset>
 
@@ -298,11 +366,18 @@ export function Categories() {
               <button
                 type="button"
                 className="btn btn-ghost btn-sm"
-                onClick={() => document.getElementById("add_category").close()}
+                onClick={() => {
+                  document.getElementById("add_category").close();
+                  setDataCategory({ id: "", name: "", parentId: "" });
+                }}
               >
                 Cancel
               </button>
-              <button type="submit" className="btn btn-primary btn-sm">
+              <button
+                type="submit"
+                form="form_add_category"
+                className="btn btn-primary btn-sm"
+              >
                 Save
               </button>
             </div>
