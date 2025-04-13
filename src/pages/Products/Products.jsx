@@ -28,8 +28,6 @@ export function Products() {
         totalPages: response.data.totalPages,
       };
 
-      console.log(data);
-
       return data;
     } catch (error) {
       console.log(error);
