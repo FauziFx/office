@@ -44,3 +44,15 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 img:where(.swal2-image) {
   height: 80vh;
 }
+
+/* Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type="number"] {
+  -moz-appearance: textfield;
+}
