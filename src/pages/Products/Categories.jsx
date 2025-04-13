@@ -210,7 +210,10 @@ export function Categories() {
               <LoadingTable row="8" colspan="6" />
             ) : (
               data.map(
-                ({ id, name, parentId, parent, subCategories }, index) => (
+                (
+                  { id, name, parentId, parent, subCategories, totalProducts },
+                  index
+                ) => (
                   <Fragment key={index}>
                     <tr>
                       <td className="border-b border-gray-200" width="1%">
@@ -240,7 +243,9 @@ export function Categories() {
                           {parent && parent.name}
                         </p>
                       </td>
-                      <td className="border-b border-gray-200">10</td>
+                      <td className="border-b border-gray-200">
+                        {totalProducts}
+                      </td>
                       <td className="border-b border-gray-200">
                         <button
                           className="btn btn-xs btn-ghost btn-circle text-success tooltip mr-2"
