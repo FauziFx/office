@@ -78,7 +78,7 @@ const useProductStore = create((set) => ({
       categoryId: "",
       status: true,
       description: "",
-      basePrice: "",
+      base_price: "",
       variants: [
         {
           name: "",
