@@ -1,4 +1,4 @@
-import { Pencil, Plus, Settings, Trash2 } from "lucide-react";
+import { Eye, Pencil, Plus, Settings, Trash2 } from "lucide-react";
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { LoadingTable } from "@/components";
@@ -64,18 +64,8 @@ export function Products() {
               ))}
             <option value="null">Uncategorized</option>
           </select>
-          <select
-            // value={opticId}
-            // onChange={(e) => setOpticId(e.target.value)}
-            className="select select-sm shadow w-full md:1/5"
-          >
+          <select className="select select-sm shadow w-full md:1/5">
             <option value="">Subcategories</option>
-            {/* {optic.length >= 1 &&
-              optic.map((item, index) => (
-                <option key={index} value={item.id}>
-                  {item.optic_name}
-                </option>
-              ))} */}
           </select>
           <Link
             to="/products/add-product"
@@ -126,7 +116,6 @@ export function Products() {
                       <p className="text-xs font-semibold capitalize">
                         {categories?.name || "Uncategorized"}
                       </p>
-                      <p className="text-xs text-gray-500 font-light">&nbsp;</p>
                     </td>
                     <td className="border-b border-gray-200">
                       Rp {base_price}
@@ -143,6 +132,12 @@ export function Products() {
                       </label>
                     </td>
                     <td className="border-b border-gray-200">
+                      <button
+                        className="btn btn-xs btn-ghost btn-circle text-info tooltip mr-2"
+                        data-tip="Details"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </button>
                       <Link
                         className="btn btn-xs btn-ghost btn-circle text-success tooltip mr-2"
                         data-tip="Edit"
