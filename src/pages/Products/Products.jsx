@@ -17,6 +17,7 @@ import useSWR, { useSWRConfig } from "swr";
 import useProductStore from "@/store/useProductStore";
 
 export function Products() {
+  const { mutate } = useSWRConfig();
   const {
     name: productName,
     categoryId: productCategoryId,
@@ -46,6 +47,16 @@ export function Products() {
       document.getElementById("modal_product_details").showModal();
     } catch (error) {
       console.log(error);
+    }
+  };
+
+  const toggleStatus = async (id, currentStatus) => {
+    const newStatus = currentStatus === 1 ? 0 : 1;
+    try {
+      await api.patch(`/products/${id}/status`, { status: newStatus });
+      mutate(`/products?${query}`);
+    } catch (error) {
+      console.error("Error updating status", error);
     }
   };
 
@@ -159,7 +170,7 @@ export function Products() {
                           type="checkbox"
                           className="toggle toggle-xs toggle-primary"
                           checked={status === 1}
-                          onChange={() => console.log(id)}
+                          onChange={() => toggleStatus(id, status)}
                         />
                         {status === 1 ? "Active" : "Inactive"}
                       </label>
