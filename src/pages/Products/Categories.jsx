@@ -123,10 +123,8 @@ export function Categories() {
     try {
       const response = await api.delete(`/categories/${id}`);
 
-      if (response.data.success) {
-        mutate(`/categories?${query.toString()}`);
-        Swal.fire(response.data.message);
-      }
+      mutate(`/categories?${query.toString()}`);
+      Swal.fire(response.data.message);
     } catch (error) {
       console.log(error);
     }
