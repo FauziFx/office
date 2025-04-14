@@ -3,6 +3,7 @@ import { create } from "zustand";
 const useProductStore = create((set) => ({
   name: "",
   categoryId: "",
+  categories: "",
   status: true,
   description: "",
   base_price: "",
@@ -11,6 +12,21 @@ const useProductStore = create((set) => ({
   variants: [
     { name: "", price: "", stock: "", minimum_stock: "", track_stock: true }, // Use '1' for tracking stock
   ],
+
+  setProduct: (product) =>
+    set({
+      name: product.name || "",
+      categoryId: product.categoryId || "",
+      categories: product.categories.name,
+      status: product.status === 1, // ubah ke boolean
+      description: product.description || "",
+      base_price: product.base_price || 0,
+      variants:
+        product.variants?.map((v) => ({
+          ...v,
+          track_stock: v.track_stock === 1, // convert ke boolean
+        })) || [],
+    }),
 
   setVariants: (variants) => set({ variants }),
 
