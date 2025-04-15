@@ -15,6 +15,7 @@ import { LoadingTable } from "@/components";
 import api from "@/utils/api";
 import useSWR, { useSWRConfig } from "swr";
 import useProductStore from "@/store/useProductStore";
+import Swal from "sweetalert2";
 
 export function Products() {
   const { mutate } = useSWRConfig();
@@ -62,6 +63,32 @@ export function Products() {
     }
   };
 
+  const handleDelete = (id) => {
+    Swal.fire({
+      title: "Deleted Product?",
+      showDenyButton: true,
+      showCancelButton: true,
+      showConfirmButton: false,
+      denyButtonText: `Yes, Deleted`,
+    }).then((result) => {
+      // Confirm Delete
+      if (result.isDenied) {
+        deleteProduct(id);
+      }
+    });
+  };
+
+  const deleteProduct = async (id) => {
+    try {
+      const response = await api.delete(`/products/${id}`);
+
+      mutate(`/products?${query.toString()}`);
+      Swal.fire(response.data.message);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   const fetcher = async (url) => {
     try {
       const response = await api.get(url);
@@ -80,7 +107,10 @@ export function Products() {
     }
   };
 
-  const { data, error, isLoading } = useSWR(`/products?${query}`, fetcher);
+  const { data, error, isLoading } = useSWR(
+    `/products?${query.toString()}`,
+    fetcher
+  );
 
   if (error) return <p>Error loading data.</p>;
 
@@ -109,9 +139,6 @@ export function Products() {
                 </option>
               ))}
             <option value="null">Uncategorized</option>
-          </select>
-          <select className="select select-sm shadow w-full md:1/5">
-            <option value="">Subcategories</option>
           </select>
           <Link
             to="/products/add-product"
@@ -194,12 +221,13 @@ export function Products() {
                       >
                         <Pencil className="h-4 w-4" />
                       </Link>
-                      <Link
+                      <button
                         className="btn btn-xs btn-ghost btn-circle text-error tooltip"
                         data-tip="Delete"
+                        onClick={() => handleDelete(id)}
                       >
                         <Trash2 className="h-4 w-4" />
-                      </Link>
+                      </button>
                     </td>
                   </tr>
                 )
