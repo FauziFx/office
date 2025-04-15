@@ -5,42 +5,77 @@ import {
   Minus,
   Plus,
 } from "lucide-react";
-import React, { useState } from "react";
+import React, { Fragment, useState } from "react";
 import { Link } from "react-router-dom";
+import api from "@/utils/api";
+import useSWR from "swr";
+import { LoadingTable } from "@/components";
+import dayjs from "dayjs"; // Core Day.js
+import utc from "dayjs/plugin/utc"; // Plugin UTC
+import timezone from "dayjs/plugin/timezone"; // Plugin Timezone
+// Extend plugins ke Day.js
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 export function StockAdjustments() {
   const [openRow, setOpenRow] = useState(null); // Menyimpan ID baris yang terbuka
   const toggleRow = (rowId) => {
     setOpenRow(openRow === rowId ? null : rowId); // Buka/tutup baris
   };
+
+  const [name, setName] = useState("");
+  const [page, setPage] = useState(1);
+  const limit = 15; // Default limit 15
+
+  // Query string berdasarkan filter
+  const query = new URLSearchParams({ page, limit });
+  if (name) query.append("productName", name);
+
+  const fetcher = async (url) => {
+    try {
+      const response = await api.get(url);
+
+      return response.data;
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const { data, error, isLoading } = useSWR(
+    `/stock/adjustments?${query.toString()}`,
+    fetcher
+  );
+
+  if (error) return <p>Error loading data.</p>;
+
   return (
     <div>
       <h1 className="text-xl font-bold mb-4">Stock Adjustments</h1>
       <div className="card bg-white shadow-md p-4">
         <div className="flex flex-col md:flex-row gap-2 md:items-center justify-between">
           <input
-            type="date"
+            type="text"
             placeholder="Search by product name"
-            // value={name}
-            // onChange={(e) => setName(e.target.value)}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             className="input input-sm shadow w-full md:w-1/2"
           />
 
           <Link
             to="/products/stock-in"
-            className="btn btn-success btn-sm md:w-1/5"
+            className="btn btn-success btn-sm md:w-1/6"
           >
             <Plus className="w-4 h-4 mr-2" /> Stock In
           </Link>
           <Link
             to="/products/stock-out"
-            className="btn btn-error btn-sm md:w-1/5"
+            className="btn btn-error btn-sm md:w-1/6"
           >
             <Minus className="w-4 h-4 mr-2" /> Stock Out
           </Link>
           <Link
             to="/products/adjustment"
-            className="btn btn-warning btn-sm md:w-1/5"
+            className="btn btn-warning btn-sm md:w-1/6"
           >
             <SlidersHorizontal className="w-4 h-4 mr-2" /> Adjustment
           </Link>
@@ -53,7 +88,7 @@ export function StockAdjustments() {
             <tr>
               {[
                 "",
-                "Tanggal",
+                "Date",
                 "Product",
                 "Variant",
                 "Type",
@@ -76,202 +111,93 @@ export function StockAdjustments() {
           </thead>
           {/* Body */}
           <tbody>
-            <tr>
-              <td className="border-b border-gray-200" width="1%">
-                <button
-                  className="btn btn-xs btn-ghost btn-circle my-1"
-                  onClick={() => toggleRow(1)}
-                >
-                  {openRow === 1 ? (
-                    <CircleMinus className="h-4 w-4 cursor-pointer text-error" />
-                  ) : (
-                    <CirclePlus className="h-4 w-4 cursor-pointer text-primary" />
-                  )}
-                </button>
-              </td>
-              <td className="border-b border-gray-200">01-02-1970</td>
-              <td className="border-b border-gray-200">
-                <p className="text-xs font-semibold capitalize">Product Name</p>
-              </td>
-              <td className="border-b border-gray-200">-025</td>
-              <td className="border-b border-gray-200">
-                <div className="badge badge-success badge-xs">In</div>
-              </td>
-              <td className="border-b border-gray-200">+200</td>
-              <td className="border-b border-gray-200">
-                Lorem ipsum dolor sit amet.
-              </td>
-            </tr>
-            <tr>
-              <td className="border-b border-gray-200" width="1%">
-                <button
-                  className="btn btn-xs btn-ghost btn-circle my-1"
-                  onClick={() => toggleRow(1)}
-                >
-                  {openRow === 1 ? (
-                    <CircleMinus className="h-4 w-4 cursor-pointer text-error" />
-                  ) : (
-                    <CirclePlus className="h-4 w-4 cursor-pointer text-primary" />
-                  )}
-                </button>
-              </td>
-              <td className="border-b border-gray-200">01-02-1970</td>
-              <td className="border-b border-gray-200">
-                <p className="text-xs font-semibold capitalize">Product Name</p>
-              </td>
-              <td className="border-b border-gray-200">-025</td>
-              <td className="border-b border-gray-200">
-                <div className="badge badge-error badge-xs">Out</div>
-              </td>
-              <td className="border-b border-gray-200">-100</td>
-              <td className="border-b border-gray-200">
-                Lorem ipsum dolor sit amet.
-              </td>
-            </tr>
-            <tr>
-              <td className="border-b border-gray-200" width="1%">
-                <button
-                  className="btn btn-xs btn-ghost btn-circle my-1"
-                  onClick={() => toggleRow(3)}
-                >
-                  {openRow === 3 ? (
-                    <CircleMinus className="h-4 w-4 cursor-pointer text-error" />
-                  ) : (
-                    <CirclePlus className="h-4 w-4 cursor-pointer text-primary" />
-                  )}
-                </button>
-              </td>
-              <td className="border-b border-gray-200">01-02-1970</td>
-              <td className="border-b border-gray-200">
-                <p className="text-xs font-semibold capitalize">Product Name</p>
-              </td>
-              <td className="border-b border-gray-200">-025</td>
-              <td className="border-b border-gray-200">
-                <div className="badge badge-warning badge-xs">Adjust</div>
-              </td>
-              <td className="border-b border-gray-200">-100</td>
-              <td className="border-b border-gray-200">
-                Lorem ipsum dolor sit amet.
-              </td>
-            </tr>
-            {openRow === 3 && (
-              <tr className="bg-gray-100">
-                <td className="border border-gray-300 px-6 py-2" colSpan={7}>
-                  <p>
-                    <b>Current Stock: </b>100 <br />
-                    <b>Adjust: </b>-100 <br />
-                    <b>Final Stock: </b>0
-                  </p>
-                </td>
-              </tr>
-            )}
-            {/* {!isLoadingPatient ? (
-              dataPatient.data.map(
+            {isLoading ? (
+              <LoadingTable row="10" colspan="7" />
+            ) : (
+              data.data.map(
                 (
                   {
-                    id,
-                    name,
-                    address,
-                    phone_number,
-                    date_of_birth,
-                    gender,
-                    optic,
                     createdAt,
-                    medicalconditions,
+                    id,
+                    productName,
+                    variantName,
+                    type,
+                    before_stock,
+                    adjust,
+                    after_stock,
+                    note,
                   },
                   index
                 ) => (
-                  <tr key={index}>
-                    <td className="border-b border-gray-200">
-                      {(page - 1) * limit + index + 1}
-                    </td>
-                    <td className="border-b border-gray-200">
-                      <p className="text-xs font-semibold capitalize">
-                        {name.toLowerCase()}
-                      </p>
-                      <p className="text-xs text-gray-500 font-light">
-                        {phone_number}
-                      </p>
-                    </td>
-                    <td className="border-b border-gray-200 text-center">
-                      <p className="text-xs font-semibold">
-                        {gender == "Perempuan" ? "P" : "L"}
-                      </p>
-                      <p className="text-xs text-gray-500 font-light">
-                        {dayjs().diff(
-                          dayjs(date_of_birth.split("T")[0]),
-                          "year"
-                        )}{" "}
-                        Thn
-                      </p>
-                    </td>
-                    <td className="border-b border-gray-200">
-                      <p className="text-xs text-gray-700 font-semibold">
-                        {address}
-                      </p>
-                    </td>
-                    <td className="border-b border-gray-200">
-                      <ul className="list-inside list-disc">
-                        {medicalconditions &&
-                          medicalconditions.map(({ name }, index2) => (
-                            <li key={index2}>{name}</li>
-                          ))}
-                      </ul>
-                    </td>
-                    <td className="border-b border-gray-200">
-                      <p className="text-xs font-semibold text-gray-700">
-                        {optic.optic_name}
-                      </p>
-                      <p className="text-xs text-gray-500 font-light">
+                  <Fragment key={index}>
+                    <tr>
+                      <td className="border-b border-gray-200" width="1%">
+                        <button
+                          className="btn btn-xs btn-ghost btn-circle my-1"
+                          onClick={() => toggleRow(id)}
+                        >
+                          {openRow === id ? (
+                            <CircleMinus className="h-4 w-4 cursor-pointer text-error" />
+                          ) : (
+                            <CirclePlus className="h-4 w-4 cursor-pointer text-primary" />
+                          )}
+                        </button>
+                      </td>
+                      <td className="border-b border-gray-200">
                         {dayjs(createdAt)
                           .tz("Asia/Jakarta")
                           .format("DD-MM-YYYY")}
-                      </p>
-                    </td>
-                    <td className="w-28 flex justify-end">
-                      <Link
-                        to="/medical-record/add-medical-record"
-                        state={{ patientId: id, prevPage: location.pathname }}
-                        className="btn btn-xs btn-ghost btn-circle text-neutral tooltip"
-                        data-tip="Add Medical Record"
-                      >
-                        <FilePlus className="h-4 w-4" />
-                      </Link>
-                      <Link
-                        to={`/medical-record/patients/${id}`}
-                        className="btn btn-xs btn-ghost btn-circle text-info tooltip"
-                        data-tip="Detail"
-                      >
-                        <Info className="h-4 w-4" />
-                      </Link>
-                      <Link
-                        to={`/medical-record/edit-patient-data/${id}`}
-                        className="btn btn-xs btn-ghost btn-circle text-success tooltip"
-                        data-tip="Edit"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Link>
-                      {userRole == "admin" && (
-                        <button
-                          className="btn btn-xs btn-ghost btn-circle text-error tooltip"
-                          data-tip="Delete"
-                          onClick={() => handleDelete(id)}
+                      </td>
+                      <td className="border-b border-gray-200">
+                        <p className="text-xs font-semibold capitalize">
+                          {productName}
+                        </p>
+                      </td>
+                      <td className="border-b border-gray-200">
+                        {variantName}
+                      </td>
+                      <td className="border-b border-gray-200">
+                        {type == "in" ? (
+                          <div className="badge badge-success badge-xs">In</div>
+                        ) : type == "out" ? (
+                          <div className="badge badge-error badge-xs">Out</div>
+                        ) : (
+                          <div className="badge badge-warning badge-xs">
+                            Adjust
+                          </div>
+                        )}
+                      </td>
+                      <td className="border-b border-gray-200">
+                        {adjust < 0 ? adjust : "+" + adjust}
+                      </td>
+                      <td className="border-b border-gray-200">{note}</td>
+                    </tr>
+                    {openRow === id && (
+                      <tr className="bg-gray-100">
+                        <td
+                          className="border border-gray-300 px-6 py-2"
+                          colSpan={7}
                         >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      )}
-                    </td>
-                  </tr>
+                          <p>
+                            <b>Before Stock: </b>
+                            {before_stock} <br />
+                            <b>Adjust: </b>
+                            {adjust < 0 ? adjust : "+" + adjust} <br />
+                            <b>After Stock: </b>
+                            {after_stock}
+                          </p>
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
                 )
               )
-            ) : (
-              <LoadingTable row="10" colspan="7" />
-            )} */}
+            )}
           </tbody>
         </table>
       </div>
       {/* Pagination */}
-      {/* <div className="flex flex-col justify-center items-center mt-4">
+      <div className="flex flex-col justify-center items-center mt-4">
         <div className="join">
           <button
             className="join-item btn btn-sm bg-white"
@@ -281,20 +207,20 @@ export function StockAdjustments() {
             « Prev
           </button>
           <button className="join-item btn btn-sm bg-white font-normal">
-            Page {page} of {!isLoadingPatient && dataPatient.totalPages}
+            Page {page} of {!isLoading && data.totalPages}
           </button>
           <button
             className="join-item btn btn-sm bg-white"
-            disabled={page >= (!isLoadingPatient && dataPatient.totalPages)}
+            disabled={page >= (!isLoading && data.totalPages)}
             onClick={() => setPage(page + 1)}
           >
             Next »
           </button>
         </div>
         <div className="text-xs mt-4">
-          Total Data: {!isLoadingPatient && dataPatient.totalData}
+          Total Data: {!isLoading && data.totalData}
         </div>
-      </div> */}
+      </div>
 
       {/* Modal Quick Adjust */}
       <dialog id="quick_adjust" className="modal">
