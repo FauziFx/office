@@ -1,12 +1,15 @@
 import { create } from "zustand";
 
 const useProductStore = create((set) => ({
+  id: "",
   name: "",
   categoryId: "",
   categories: "",
   status: true,
   description: "",
   base_price: "",
+
+  deletedVariantIds: [],
 
   // Initialize with one default variant with specified defaults
   variants: [
@@ -15,6 +18,7 @@ const useProductStore = create((set) => ({
 
   setProduct: (product) =>
     set({
+      id: product.id,
       name: product.name || "",
       categoryId: product.categoryId || "",
       categories: product.categories.name,
@@ -58,6 +62,12 @@ const useProductStore = create((set) => ({
       variants: state.variants.filter((_, i) => i !== index),
     })),
 
+  markVariantDeleted: (id) =>
+    set((state) => ({
+      deletedVariantIds: [...state.deletedVariantIds, id],
+      variants: state.variants.filter((v) => v.id !== id),
+    })),
+
   // Update Variant Field Method
   updateVariantField: (index, field, value) => {
     if (["price", "stock", "minimum_stock"].includes(field)) {
@@ -90,8 +100,10 @@ const useProductStore = create((set) => ({
 
   resetForm: () =>
     set({
+      id: "",
       name: "",
       categoryId: "",
+      categories: "",
       status: true,
       description: "",
       base_price: "",
@@ -104,6 +116,7 @@ const useProductStore = create((set) => ({
           track_stock: true,
         },
       ],
+      deletedVariantIds: [],
     }),
 }));
 

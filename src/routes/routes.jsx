@@ -2,6 +2,7 @@ import { Dashboard } from "@/pages/Dashboard";
 import {
   Products,
   AddProduct,
+  EditProduct,
   Categories,
   StockManagements,
   StockAdjustments,
@@ -52,6 +53,20 @@ const routes = [
         name: "Add Products",
         path: "/products/add-product",
         component: AddProduct,
+        showInMenu: false,
+        roles: ["admin", "user"],
+      },
+      {
+        name: "Add Products",
+        path: "/products/edit-product",
+        component: () => <Navigate to="/products" replace />,
+        showInMenu: false,
+        roles: ["admin", "user"],
+      },
+      {
+        name: "Add Products",
+        path: "/products/edit-product/:id",
+        component: EditProduct,
         showInMenu: false,
         roles: ["admin", "user"],
       },

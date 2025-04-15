@@ -27,6 +27,7 @@ export function Products() {
     base_price,
     variants,
     setProduct,
+    resetForm,
   } = useProductStore();
 
   const [name, setName] = useState("");
@@ -41,6 +42,7 @@ export function Products() {
 
   const handleDetail = async (id) => {
     try {
+      resetForm();
       const response = await api.get("/products/" + id);
       setProduct(response.data.data);
 
@@ -114,6 +116,7 @@ export function Products() {
           <Link
             to="/products/add-product"
             className="btn btn-primary btn-sm w-full md:w-auto"
+            onClick={() => resetForm()}
           >
             <Plus className="w-4 h-4 mr-2" /> Add Product
           </Link>
@@ -184,8 +187,10 @@ export function Products() {
                         <Eye className="h-4 w-4" />
                       </button>
                       <Link
+                        to={`/products/edit-product/${id}`}
                         className="btn btn-xs btn-ghost btn-circle text-success tooltip mr-2"
                         data-tip="Edit"
+                        onClick={() => resetForm()}
                       >
                         <Pencil className="h-4 w-4" />
                       </Link>
