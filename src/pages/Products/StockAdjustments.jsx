@@ -13,11 +13,13 @@ import { LoadingTable } from "@/components";
 import dayjs from "dayjs"; // Core Day.js
 import utc from "dayjs/plugin/utc"; // Plugin UTC
 import timezone from "dayjs/plugin/timezone"; // Plugin Timezone
+import useStockStore from "@/store/useStockStore";
 // Extend plugins ke Day.js
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
 export function StockAdjustments() {
+  const { resetForm } = useStockStore();
   const [openRow, setOpenRow] = useState(null); // Menyimpan ID baris yang terbuka
   const toggleRow = (rowId) => {
     setOpenRow(openRow === rowId ? null : rowId); // Buka/tutup baris
@@ -64,6 +66,7 @@ export function StockAdjustments() {
           <Link
             to="/products/stock-in"
             className="btn btn-success btn-sm md:w-1/6"
+            onClick={() => resetForm()}
           >
             <Plus className="w-4 h-4 mr-2" /> Stock In
           </Link>
