@@ -81,8 +81,6 @@ export function EditProduct() {
         deletedVariantIds,
       };
 
-      console.log(payload);
-
       const response = await api.patch("/products/" + idParams, payload);
 
       if (response.data.success) {
