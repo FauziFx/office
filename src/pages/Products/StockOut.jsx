@@ -219,7 +219,7 @@ export function StockOut() {
               type="submit"
               name="next"
               className="btn btn-sm join-item btn-soft btn-primary"
-              //   disabled={isLoadingSave}
+              disabled={isLoadingSave}
             >
               « Back
             </Link>
