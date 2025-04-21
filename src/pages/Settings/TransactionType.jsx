@@ -12,28 +12,135 @@ import {
 } from "lucide-react";
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import api from "@/utils/api";
+import useSWR, { useSWRConfig } from "swr";
+import Swal from "sweetalert2";
+import { LoadingTable } from "@/components";
 
 export function TransactionType() {
-  const [openRow, setOpenRow] = useState(null); // Menyimpan ID baris yang terbuka
-  const toggleRow = (rowId) => {
-    setOpenRow(openRow === rowId ? null : rowId); // Buka/tutup baris
+  const { mutate } = useSWRConfig();
+  const [dataType, setDataType] = useState({
+    id: "",
+    name: "",
+    description: "",
+  });
+
+  const [isEditMode, setIsEditMode] = useState(false);
+
+  const handleChange = (e) => {
+    const name = e.target.name;
+    const value = e.target.value;
+
+    setDataType({
+      ...dataType,
+      [name]: value,
+    });
   };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (isEditMode) {
+      updateType(dataType.id, dataType);
+    } else {
+      addNewTyp(dataType);
+    }
+  };
+
+  const addNewTyp = async (data) => {
+    try {
+      const response = await api.post("/transaction-types", {
+        name: data.name,
+        description: data.description,
+      });
+
+      if (response.data.success) {
+        Swal.fire(response.data.message);
+        mutate("/transaction-types");
+        document.getElementById("add_transaction_type").close();
+        setDataType({ id: "", name: "", description: "" });
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const updateType = async (id, data) => {
+    try {
+      const response = await api.patch("/transaction-types/" + id, {
+        name: data.name,
+        description: data.description,
+      });
+
+      if (response.data.success) {
+        Swal.fire(response.data.message);
+        mutate("/transaction-types");
+        document.getElementById("add_transaction_type").close();
+        setDataType({ id: "", name: "", description: "" });
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleUpdate = (id, name, description) => {
+    setDataType({
+      id: id,
+      name: name,
+      description: description,
+    });
+    setIsEditMode(true);
+    document.getElementById("add_transaction_type").showModal();
+  };
+
+  const handleDelete = (id) => {
+    Swal.fire({
+      title: "Deleted Transaction Type?",
+      showDenyButton: true,
+      showCancelButton: true,
+      showConfirmButton: false,
+      denyButtonText: `Yes, Deleted`,
+    }).then((result) => {
+      // Confirm Delete
+      if (result.isDenied) {
+        deleteType(id);
+      }
+    });
+  };
+
+  const deleteType = async (id) => {
+    try {
+      const response = await api.delete(`/transaction-types/${id}`);
+
+      mutate("/transaction-types");
+      Swal.fire(response.data.message);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const fetcher = async (url) => {
+    try {
+      const response = await api.get(url);
+
+      return response.data.data;
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const { data, error, isLoading } = useSWR("/transaction-types", fetcher);
+
+  if (error) return <p>Error loading data.</p>;
   return (
     <div>
       <h1 className="text-xl font-bold mb-4">Transaction Type</h1>
       <div className="card bg-white shadow-md p-4">
-        <div className="flex flex-col md:flex-row gap-2 md:items-center justify-between">
-          <input
-            type="search"
-            placeholder="Search by Name"
-            // value={name}
-            // onChange={(e) => setName(e.target.value)}
-            className="input input-sm shadow w-full md:w-1/4"
-          />
+        <div className="flex flex-col md:flex-row gap-2 md:items-center justify-end">
           <button
-            onClick={() =>
-              document.getElementById("add_transaction_type").showModal()
-            }
+            onClick={() => {
+              document.getElementById("add_transaction_type").showModal();
+              setIsEditMode(false);
+            }}
             className="btn btn-primary btn-sm w-full md:w-auto"
           >
             <Plus className="w-4 h-4 mr-2" /> Add Transaction Type
@@ -67,170 +174,52 @@ export function TransactionType() {
           </thead>
           {/* Body */}
           <tbody>
-            <tr>
-              <td className="border-b border-gray-200" width="1%">
-                1
-              </td>
-              <td className="border-b border-gray-200">
-                <p className="text-xs font-semibold capitalize">Grosir</p>
-              </td>
-              <td className="border-b border-gray-200">Transaksi optik umum</td>
-              <td className="border-b border-gray-200">
-                <Link
-                  className="btn btn-xs btn-ghost btn-circle text-success tooltip mr-2"
-                  data-tip="Edit"
-                >
-                  <Pencil className="h-4 w-4" />
-                </Link>
-                <Link
-                  className="btn btn-xs btn-ghost btn-circle text-error tooltip"
-                  data-tip="Delete"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Link>
-              </td>
-            </tr>
-            {/* {!isLoadingPatient ? (
-              dataPatient.data.map(
-                (
-                  {
-                    id,
-                    name,
-                    address,
-                    phone_number,
-                    date_of_birth,
-                    gender,
-                    optic,
-                    createdAt,
-                    medicalconditions,
-                  },
-                  index
-                ) => (
-                  <tr key={index}>
-                    <td className="border-b border-gray-200">
-                      {(page - 1) * limit + index + 1}
-                    </td>
-                    <td className="border-b border-gray-200">
-                      <p className="text-xs font-semibold capitalize">
-                        {name.toLowerCase()}
-                      </p>
-                      <p className="text-xs text-gray-500 font-light">
-                        {phone_number}
-                      </p>
-                    </td>
-                    <td className="border-b border-gray-200 text-center">
-                      <p className="text-xs font-semibold">
-                        {gender == "Perempuan" ? "P" : "L"}
-                      </p>
-                      <p className="text-xs text-gray-500 font-light">
-                        {dayjs().diff(
-                          dayjs(date_of_birth.split("T")[0]),
-                          "year"
-                        )}{" "}
-                        Thn
-                      </p>
-                    </td>
-                    <td className="border-b border-gray-200">
-                      <p className="text-xs text-gray-700 font-semibold">
-                        {address}
-                      </p>
-                    </td>
-                    <td className="border-b border-gray-200">
-                      <ul className="list-inside list-disc">
-                        {medicalconditions &&
-                          medicalconditions.map(({ name }, index2) => (
-                            <li key={index2}>{name}</li>
-                          ))}
-                      </ul>
-                    </td>
-                    <td className="border-b border-gray-200">
-                      <p className="text-xs font-semibold text-gray-700">
-                        {optic.optic_name}
-                      </p>
-                      <p className="text-xs text-gray-500 font-light">
-                        {dayjs(createdAt)
-                          .tz("Asia/Jakarta")
-                          .format("DD-MM-YYYY")}
-                      </p>
-                    </td>
-                    <td className="w-28 flex justify-end">
-                      <Link
-                        to="/medical-record/add-medical-record"
-                        state={{ patientId: id, prevPage: location.pathname }}
-                        className="btn btn-xs btn-ghost btn-circle text-neutral tooltip"
-                        data-tip="Add Medical Record"
-                      >
-                        <FilePlus className="h-4 w-4" />
-                      </Link>
-                      <Link
-                        to={`/medical-record/patients/${id}`}
-                        className="btn btn-xs btn-ghost btn-circle text-info tooltip"
-                        data-tip="Detail"
-                      >
-                        <Info className="h-4 w-4" />
-                      </Link>
-                      <Link
-                        to={`/medical-record/edit-patient-data/${id}`}
-                        className="btn btn-xs btn-ghost btn-circle text-success tooltip"
-                        data-tip="Edit"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Link>
-                      {userRole == "admin" && (
-                        <button
-                          className="btn btn-xs btn-ghost btn-circle text-error tooltip"
-                          data-tip="Delete"
-                          onClick={() => handleDelete(id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                )
-              )
+            {isLoading ? (
+              <LoadingTable row="5" colspan="4" />
             ) : (
-              <LoadingTable row="10" colspan="7" />
-            )} */}
+              data.map(({ id, name, description }, index) => (
+                <tr key={index}>
+                  <td className="border-b border-gray-200" width="1%">
+                    {index + 1}
+                  </td>
+                  <td className="border-b border-gray-200">
+                    <p className="text-xs font-semibold capitalize">{name}</p>
+                  </td>
+                  <td className="border-b border-gray-200">{description}</td>
+                  <td className="border-b border-gray-200">
+                    <button
+                      className="btn btn-xs btn-ghost btn-circle text-success tooltip mr-2"
+                      data-tip="Edit"
+                      onClick={() => handleUpdate(id, name, description)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </button>
+                    <button
+                      className="btn btn-xs btn-ghost btn-circle text-error tooltip"
+                      data-tip="Delete"
+                      onClick={() => handleDelete(id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
-      {/* Pagination */}
-      {/* <div className="flex flex-col justify-center items-center mt-4">
-        <div className="join">
-          <button
-            className="join-item btn btn-sm bg-white"
-            disabled={page <= 1}
-            onClick={() => setPage(page - 1)}
-          >
-            « Prev
-          </button>
-          <button className="join-item btn btn-sm bg-white font-normal">
-            Page {page} of {!isLoadingPatient && dataPatient.totalPages}
-          </button>
-          <button
-            className="join-item btn btn-sm bg-white"
-            disabled={page >= (!isLoadingPatient && dataPatient.totalPages)}
-            onClick={() => setPage(page + 1)}
-          >
-            Next »
-          </button>
-        </div>
-        <div className="text-xs mt-4">
-          Total Data: {!isLoadingPatient && dataPatient.totalData}
-        </div>
-      </div> */}
 
       {/* Modal Add Customer */}
       <dialog id="add_transaction_type" className="modal">
         <div className="modal-box md:px-12">
-          <h3 className="font-bold mb-4">Add Transaction Type</h3>
+          <h3 className="font-bold mb-4">
+            {isEditMode ? "Edit Transaction Type" : "Add Transaction Type"}
+          </h3>
           {/* Form */}
           <form
-            onSubmit={(e) => {
-              e.preventDefault();
-            }}
+            onSubmit={handleSubmit}
             className="flex flex-col justify-center"
+            autoComplete="off"
           >
             {/* Customer Name */}
             <fieldset className="fieldset w-full">
@@ -238,7 +227,11 @@ export function TransactionType() {
               <input
                 type="text"
                 className="input input-sm w-full"
-                placeholder="e.g. Single Vision"
+                placeholder="e.g. Grosir"
+                name="name"
+                value={dataType.name}
+                onChange={(e) => handleChange(e)}
+                required
               />
             </fieldset>
 
@@ -246,7 +239,10 @@ export function TransactionType() {
               <legend className="fieldset-legend">Description</legend>
               <textarea
                 className="textarea textarea-sm w-full"
-                placeholder="Bio"
+                placeholder="Description"
+                name="description"
+                value={dataType.description}
+                onChange={(e) => handleChange(e)}
               ></textarea>
             </fieldset>
 
@@ -255,9 +251,10 @@ export function TransactionType() {
               <button
                 type="button"
                 className="btn btn-ghost btn-sm"
-                onClick={() =>
-                  document.getElementById("add_transaction_type").close()
-                }
+                onClick={() => {
+                  document.getElementById("add_transaction_type").close();
+                  setDataType({ id: "", name: "", description: "" });
+                }}
               >
                 Cancel
               </button>
