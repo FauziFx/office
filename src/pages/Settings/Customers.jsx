@@ -12,12 +12,173 @@ import {
 } from "lucide-react";
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import { LoadingTable } from "@/components";
+import api from "@/utils/api";
+import useSWR, { useSWRConfig } from "swr";
+import Swal from "sweetalert2";
 
 export function Customers() {
-  const [openRow, setOpenRow] = useState(null); // Menyimpan ID baris yang terbuka
-  const toggleRow = (rowId) => {
-    setOpenRow(openRow === rowId ? null : rowId); // Buka/tutup baris
+  const { mutate } = useSWRConfig();
+  const [name, setName] = useState("");
+  const [dataCustomer, setDataCustomer] = useState({
+    name: "",
+    transactionTypeId: "",
+    include_revenue: true,
+    is_default: false,
+  });
+  const [isEditMode, setIsEditMode] = useState(false);
+  const query = new URLSearchParams({});
+  if (name) query.append("name", name);
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    if (type === "checkbox") {
+      setDataCustomer({
+        ...dataCustomer,
+        [name]: checked,
+      });
+    } else {
+      setDataCustomer({
+        ...dataCustomer,
+        [name]: value,
+      });
+    }
   };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (isEditMode) {
+      updateCustomer(dataCustomer.id, dataCustomer);
+    } else {
+      addNewCustomer(dataCustomer);
+    }
+  };
+
+  const addNewCustomer = async (data) => {
+    try {
+      const response = await api.post("/customers", {
+        name: dataCustomer.name,
+        transactionTypeId: Number(dataCustomer.transactionTypeId),
+        include_revenue: dataCustomer.include_revenue ? 1 : 0,
+        is_default: dataCustomer.is_default ? 1 : 0,
+      });
+      if (response.data.success) {
+        Swal.fire(response.data.message);
+        mutate(`/customers?${query.toString()}`);
+        document.getElementById("add_customer").close();
+        setDataCustomer({
+          name: "",
+          transactionTypeId: "",
+          include_revenue: true,
+          is_default: false,
+        });
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const updateCustomer = async (id, data) => {
+    try {
+      const response = await api.patch("/customers/" + id, {
+        name: dataCustomer.name,
+        transactionTypeId: Number(dataCustomer.transactionTypeId),
+        include_revenue: dataCustomer.include_revenue ? 1 : 0,
+        is_default: dataCustomer.is_default ? 1 : 0,
+      });
+      if (response.data.success) {
+        Swal.fire(response.data.message);
+        mutate(`/customers?${query.toString()}`);
+        document.getElementById("add_customer").close();
+        setDataCustomer({
+          name: "",
+          transactionTypeId: "",
+          include_revenue: true,
+          is_default: false,
+        });
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleUpdate = (
+    id,
+    name,
+    transactionTypeId,
+    include_revenue,
+    is_default
+  ) => {
+    setDataCustomer({
+      id: id,
+      name: name,
+      transactionTypeId: transactionTypeId,
+      include_revenue: include_revenue,
+      is_default: is_default,
+    });
+    setIsEditMode(true);
+    document.getElementById("add_customer").showModal();
+  };
+
+  const handleDelete = (id) => {
+    Swal.fire({
+      title: "Deleted Customer Type?",
+      showDenyButton: true,
+      showCancelButton: true,
+      showConfirmButton: false,
+      denyButtonText: `Yes, Deleted`,
+    }).then((result) => {
+      // Confirm Delete
+      if (result.isDenied) {
+        deleteCustomer(id);
+      }
+    });
+  };
+
+  const deleteCustomer = async (id) => {
+    try {
+      const response = await api.delete(`/customers/${id}`);
+
+      mutate(`/customers?${query.toString()}`);
+      Swal.fire(response.data.message);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const toggleStatus = async (id, currentStatus) => {
+    const newStatus = currentStatus === 1 ? 0 : 1;
+    try {
+      await api.patch(`/customers/${id}`, { include_revenue: newStatus });
+      mutate(`/customers?${query.toString()}`);
+    } catch (error) {
+      console.error("Error updating status", error);
+    }
+  };
+
+  const fetcher = async (url) => {
+    try {
+      const response = await api.get(url);
+      const resTransactionType = await api.get("/transaction-types");
+
+      const data = {
+        transactionType: resTransactionType.data.data,
+        customer: response.data.data,
+      };
+
+      return data;
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const { data, error, isLoading } = useSWR(
+    `/customers?${query.toString()}`,
+    fetcher,
+    { revalidateOnFocus: false }
+  );
+
+  if (error) return <p>Error loading data.</p>;
   return (
     <div>
       <h1 className="text-xl font-bold mb-4">Customers</h1>
@@ -26,12 +187,15 @@ export function Customers() {
           <input
             type="search"
             placeholder="Search by Name"
-            // value={name}
-            // onChange={(e) => setName(e.target.value)}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             className="input input-sm shadow w-full md:w-1/4"
           />
           <button
-            onClick={() => document.getElementById("add_customer").showModal()}
+            onClick={() => {
+              document.getElementById("add_customer").showModal();
+              setIsEditMode(false);
+            }}
             className="btn btn-primary btn-sm w-full md:w-auto"
           >
             <Plus className="w-4 h-4 mr-2" /> Add Customers
@@ -46,7 +210,6 @@ export function Customers() {
               {[
                 "#",
                 "Name",
-                "Phone Number",
                 "Transaction Type",
                 "Include in Revenue",
                 <Settings className="h-4 w-4" />,
@@ -67,183 +230,92 @@ export function Customers() {
           </thead>
           {/* Body */}
           <tbody>
-            <tr>
-              <td className="border-b border-gray-200" width="1%">
-                1
-              </td>
-              <td className="border-b border-gray-200">
-                <p className="text-xs font-semibold capitalize">INDAH MA</p>
-              </td>
-              <td className="border-b border-gray-200">081231312</td>
-              <td className="border-b border-gray-200">
-                <div className="badge badge-xs badge-soft badge-neutral">
-                  Grosir
-                </div>
-              </td>
-              <td className="border-b border-gray-200">
-                <label className="fieldset-label">
-                  <input
-                    type="checkbox"
-                    className="toggle toggle-xs toggle-primary"
-                  />
-                  Include
-                </label>
-              </td>
-              <td className="border-b border-gray-200">
-                <Link
-                  className="btn btn-xs btn-ghost btn-circle text-success tooltip mr-2"
-                  data-tip="Edit"
-                >
-                  <Pencil className="h-4 w-4" />
-                </Link>
-                <Link
-                  className="btn btn-xs btn-ghost btn-circle text-error tooltip"
-                  data-tip="Delete"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Link>
-              </td>
-            </tr>
-            {/* {!isLoadingPatient ? (
-              dataPatient.data.map(
+            {isLoading ? (
+              <LoadingTable row="5" colspan="5" />
+            ) : (
+              data.customer.map(
                 (
                   {
                     id,
                     name,
-                    address,
-                    phone_number,
-                    date_of_birth,
-                    gender,
-                    optic,
-                    createdAt,
-                    medicalconditions,
+                    transactionType,
+                    transactionTypeId,
+                    include_revenue,
+                    is_default,
                   },
                   index
                 ) => (
                   <tr key={index}>
-                    <td className="border-b border-gray-200">
-                      {(page - 1) * limit + index + 1}
+                    <td className="border-b border-gray-200" width="1%">
+                      {index + 1}
                     </td>
                     <td className="border-b border-gray-200">
                       <p className="text-xs font-semibold capitalize">
-                        {name.toLowerCase()}
-                      </p>
-                      <p className="text-xs text-gray-500 font-light">
-                        {phone_number}
-                      </p>
-                    </td>
-                    <td className="border-b border-gray-200 text-center">
-                      <p className="text-xs font-semibold">
-                        {gender == "Perempuan" ? "P" : "L"}
-                      </p>
-                      <p className="text-xs text-gray-500 font-light">
-                        {dayjs().diff(
-                          dayjs(date_of_birth.split("T")[0]),
-                          "year"
-                        )}{" "}
-                        Thn
+                        {name}{" "}
+                        {is_default === 1 && (
+                          <span className="font-normal text-gray-500">
+                            (Default)
+                          </span>
+                        )}
                       </p>
                     </td>
                     <td className="border-b border-gray-200">
-                      <p className="text-xs text-gray-700 font-semibold">
-                        {address}
-                      </p>
+                      <div className="badge badge-xs badge-soft badge-neutral">
+                        {transactionType.name}
+                      </div>
                     </td>
                     <td className="border-b border-gray-200">
-                      <ul className="list-inside list-disc">
-                        {medicalconditions &&
-                          medicalconditions.map(({ name }, index2) => (
-                            <li key={index2}>{name}</li>
-                          ))}
-                      </ul>
+                      <label className="fieldset-label">
+                        <input
+                          type="checkbox"
+                          checked={include_revenue === 1}
+                          className="toggle toggle-xs toggle-primary"
+                          onChange={() => toggleStatus(id, include_revenue)}
+                        />
+                        {include_revenue === 1 ? "Include" : "not Included"}
+                      </label>
                     </td>
                     <td className="border-b border-gray-200">
-                      <p className="text-xs font-semibold text-gray-700">
-                        {optic.optic_name}
-                      </p>
-                      <p className="text-xs text-gray-500 font-light">
-                        {dayjs(createdAt)
-                          .tz("Asia/Jakarta")
-                          .format("DD-MM-YYYY")}
-                      </p>
-                    </td>
-                    <td className="w-28 flex justify-end">
-                      <Link
-                        to="/medical-record/add-medical-record"
-                        state={{ patientId: id, prevPage: location.pathname }}
-                        className="btn btn-xs btn-ghost btn-circle text-neutral tooltip"
-                        data-tip="Add Medical Record"
-                      >
-                        <FilePlus className="h-4 w-4" />
-                      </Link>
-                      <Link
-                        to={`/medical-record/patients/${id}`}
-                        className="btn btn-xs btn-ghost btn-circle text-info tooltip"
-                        data-tip="Detail"
-                      >
-                        <Info className="h-4 w-4" />
-                      </Link>
-                      <Link
-                        to={`/medical-record/edit-patient-data/${id}`}
-                        className="btn btn-xs btn-ghost btn-circle text-success tooltip"
+                      <button
+                        className="btn btn-xs btn-ghost btn-circle text-success tooltip mr-2"
                         data-tip="Edit"
+                        onClick={() =>
+                          handleUpdate(
+                            id,
+                            name,
+                            transactionTypeId,
+                            include_revenue,
+                            is_default
+                          )
+                        }
                       >
                         <Pencil className="h-4 w-4" />
-                      </Link>
-                      {userRole == "admin" && (
-                        <button
-                          className="btn btn-xs btn-ghost btn-circle text-error tooltip"
-                          data-tip="Delete"
-                          onClick={() => handleDelete(id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      )}
+                      </button>
+                      <button
+                        className="btn btn-xs btn-ghost btn-circle text-error tooltip"
+                        data-tip="Delete"
+                        onClick={() => handleDelete(id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </td>
                   </tr>
                 )
               )
-            ) : (
-              <LoadingTable row="10" colspan="7" />
-            )} */}
+            )}
           </tbody>
         </table>
       </div>
-      {/* Pagination */}
-      {/* <div className="flex flex-col justify-center items-center mt-4">
-        <div className="join">
-          <button
-            className="join-item btn btn-sm bg-white"
-            disabled={page <= 1}
-            onClick={() => setPage(page - 1)}
-          >
-            « Prev
-          </button>
-          <button className="join-item btn btn-sm bg-white font-normal">
-            Page {page} of {!isLoadingPatient && dataPatient.totalPages}
-          </button>
-          <button
-            className="join-item btn btn-sm bg-white"
-            disabled={page >= (!isLoadingPatient && dataPatient.totalPages)}
-            onClick={() => setPage(page + 1)}
-          >
-            Next »
-          </button>
-        </div>
-        <div className="text-xs mt-4">
-          Total Data: {!isLoadingPatient && dataPatient.totalData}
-        </div>
-      </div> */}
 
       {/* Modal Add Customer */}
       <dialog id="add_customer" className="modal">
         <div className="modal-box md:px-12">
-          <h3 className="font-bold mb-4">Add Customer</h3>
+          <h3 className="font-bold mb-4">
+            {isEditMode ? "Edit Customer" : "Add Customer"}
+          </h3>
           {/* Form */}
           <form
-            onSubmit={(e) => {
-              e.preventDefault();
-            }}
+            onSubmit={handleSubmit}
             className="flex flex-col justify-center"
           >
             {/* Customer Name */}
@@ -252,37 +324,57 @@ export function Customers() {
               <input
                 type="text"
                 className="input input-sm w-full"
-                placeholder="e.g. Single Vision"
-              />
-            </fieldset>
-
-            <fieldset className="fieldset w-full">
-              <legend className="fieldset-legend">Phone Number</legend>
-              <input
-                type="text"
-                className="input input-sm w-full"
-                placeholder="e.g. Single Vision"
+                placeholder="e.g. John Doe"
+                name="name"
+                required
+                value={dataCustomer.name}
+                onChange={(e) => handleChange(e)}
               />
             </fieldset>
 
             <fieldset className="fieldset w-full">
               <legend className="fieldset-legend">Transaction Type</legend>
-              <select className="select select-sm w-full">
-                <option>Crimson</option>
-                <option>Amber</option>
-                <option>Velvet</option>
+              <select
+                className="select select-sm w-full"
+                name="transactionTypeId"
+                value={dataCustomer.transactionTypeId}
+                onChange={(e) => handleChange(e)}
+              >
+                <option value="">Select Transaction Type</option>
+                {!isLoading &&
+                  data.transactionType.map(({ id, name }, index) => (
+                    <option key={index} value={id}>
+                      {name}
+                    </option>
+                  ))}
               </select>
             </fieldset>
 
             <fieldset className="fieldset w-full">
               <legend className="fieldset-legend">Include In Revenue</legend>
-              <label className="fieldset-label">
+              <label className="label">
                 <input
                   type="checkbox"
-                  defaultChecked
-                  className="toggle toggle-xs toggle-primary"
+                  className="checkbox checkbox-primary checkbox-sm"
+                  name="include_revenue"
+                  checked={dataCustomer.include_revenue}
+                  onChange={(e) => handleChange(e)}
                 />
                 Include
+              </label>
+            </fieldset>
+
+            <fieldset className="fieldset w-full">
+              <legend className="fieldset-legend">Default</legend>
+              <label className="label">
+                <input
+                  type="checkbox"
+                  className="checkbox checkbox-primary checkbox-sm"
+                  name="is_default"
+                  checked={dataCustomer.is_default}
+                  onChange={(e) => handleChange(e)}
+                />
+                Set as default Customer
               </label>
             </fieldset>
 
@@ -291,7 +383,15 @@ export function Customers() {
               <button
                 type="button"
                 className="btn btn-ghost btn-sm"
-                onClick={() => document.getElementById("add_customer").close()}
+                onClick={() => {
+                  document.getElementById("add_customer").close();
+                  setDataCustomer({
+                    name: "",
+                    transactionTypeId: "",
+                    include_revenue: true,
+                    is_default: false,
+                  });
+                }}
               >
                 Cancel
               </button>
