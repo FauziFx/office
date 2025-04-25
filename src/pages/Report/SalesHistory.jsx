@@ -37,7 +37,10 @@ export function SalesHistory() {
   if (search) query.append("search", search);
   if (typeId) query.append("typeId", typeId);
   if (startDate) query.append("startDate", startDate);
-  if (endDate) query.append("endDate", endDate);
+  const adjustedEndDate = new Date(endDate);
+  adjustedEndDate.setDate(adjustedEndDate.getDate() + 1);
+  const finalEndDate = adjustedEndDate.toISOString().split("T")[0];
+  if (endDate) query.append("endDate", finalEndDate);
 
   const fetcher = async (url) => {
     try {
