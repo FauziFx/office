@@ -4,9 +4,11 @@ import api from "@/utils/api";
 import useSWRImmutable from "swr/immutable";
 import { CheckCircle } from "lucide-react";
 import { useSWRConfig } from "swr";
+import dayjs from "dayjs";
 
 export function SalesSummary() {
   const { mutate } = useSWRConfig();
+  const [dateFilter, setDateFilter] = useState("");
   const [typeId, setTypeId] = useState("");
   const [startDate, setStartDate] = useState(
     new Date().toISOString().split("T")[0]
@@ -14,6 +16,34 @@ export function SalesSummary() {
   const [endDate, setEndDate] = useState(
     new Date().toISOString().split("T")[0]
   );
+
+  const handleDateFilter = (e) => {
+    const value = e.target.value;
+    const today = dayjs();
+    setDateFilter(value);
+
+    switch (value) {
+      case "today":
+        setStartDate(today.format("YYYY-MM-DD"));
+        setEndDate(today.format("YYYY-MM-DD"));
+        break;
+      case "yesterday":
+        const yesterday = today.subtract(1, "day");
+        setStartDate(yesterday.format("YYYY-MM-DD"));
+        setEndDate(yesterday.format("YYYY-MM-DD"));
+        break;
+      case "last7days":
+        setStartDate(today.subtract(6, "day").format("YYYY-MM-DD"));
+        setEndDate(today.format("YYYY-MM-DD"));
+        break;
+      case "thismonth":
+        setStartDate(today.startOf("month").format("YYYY-MM-DD"));
+        setEndDate(today.format("YYYY-MM-DD"));
+        break;
+      default:
+        break;
+    }
+  };
 
   // Query string berdasarkan filter
   const query = new URLSearchParams({});
@@ -69,8 +99,19 @@ export function SalesSummary() {
     <div>
       <h1 className="text-xl font-bold mb-4">Sales Summary</h1>
       <div className="card bg-white shadow-md p-4">
-        <div className="flex flex-col md:flex-row gap-2 md:items-center justify-between">
-          <div className="flex gap-1 items-center w-full md:w-1/2">
+        <div className="flex flex-col md:flex-row gap-2 md:items-center">
+          <select
+            className="select select-sm w-full md:w-1/4"
+            value={dateFilter}
+            onChange={(e) => handleDateFilter(e)}
+          >
+            <option value="">Custom</option>
+            <option value="today">Today</option>
+            <option value="yesterday">Yesterday</option>
+            <option value="last7days">Last 7 Days</option>
+            <option value="thismonth">This Month</option>
+          </select>
+          <div className="flex gap-1 items-center w-full md:w-1/3">
             <fieldset className="fieldset w-full py-0 md:w-1/2">
               <legend className="fieldset-legend font-normal md:hidden py-1">
                 From
