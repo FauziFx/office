@@ -1,19 +1,70 @@
-import {
-  Banknote,
-  CircleMinus,
-  CirclePlus,
-  CreditCard,
-  QrCode,
-  Repeat,
-  Settings,
-} from "lucide-react";
 import React, { useState } from "react";
+import { LoadingTable } from "@/components";
+import api from "@/utils/api";
+import useSWRImmutable from "swr/immutable";
+import { CheckCircle } from "lucide-react";
+import { useSWRConfig } from "swr";
 
 export function SalesSummary() {
-  const [openRow, setOpenRow] = useState(null); // Menyimpan ID baris yang terbuka
-  const toggleRow = (rowId) => {
-    setOpenRow(openRow === rowId ? null : rowId); // Buka/tutup baris
+  const { mutate } = useSWRConfig();
+  const [typeId, setTypeId] = useState("");
+  const [startDate, setStartDate] = useState(
+    new Date().toISOString().split("T")[0]
+  );
+  const [endDate, setEndDate] = useState(
+    new Date().toISOString().split("T")[0]
+  );
+
+  // Query string berdasarkan filter
+  const query = new URLSearchParams({});
+  if (typeId) query.append("typeId", typeId);
+  if (startDate) query.append("startDate", startDate);
+  const adjustedEndDate = new Date(endDate);
+  adjustedEndDate.setDate(adjustedEndDate.getDate() + 1);
+  const finalEndDate = adjustedEndDate.toISOString().split("T")[0];
+  if (endDate) query.append("endDate", finalEndDate);
+
+  const revenueKey = `/reports/summary?${query.toString()}`;
+  const customerKey = `/reports/top-customers?${query.toString()}`;
+  const typeKey = `/transaction-types`;
+
+  const fetcher = async (url) => {
+    try {
+      const response = await api.get(url);
+
+      return response.data.data;
+    } catch (error) {
+      console.log(error);
+    }
   };
+
+  function formatCurrency(amount, locale = "id-ID", currency = "IDR") {
+    const validAmount = amount ?? 0;
+    return validAmount.toLocaleString(locale, {
+      style: "currency",
+      currency: currency,
+    });
+  }
+
+  const {
+    data: dataRevenue,
+    error: errRevenue,
+    isLoading: isLoadRevenue,
+  } = useSWRImmutable(revenueKey, fetcher);
+
+  const {
+    data: dataCustomer,
+    error: errCustomer,
+    isLoading: isLoadCustomer,
+  } = useSWRImmutable(customerKey, fetcher);
+
+  const {
+    data: dataType,
+    error: errType,
+    isLoading: isLoadType,
+  } = useSWRImmutable(typeKey, fetcher);
+
+  if (errRevenue || errCustomer || errType) return <p>Error loading data.</p>;
   return (
     <div>
       <h1 className="text-xl font-bold mb-4">Sales Summary</h1>
@@ -31,8 +82,8 @@ export function SalesSummary() {
                 <input
                   type="date"
                   className="join-item rounded-l md:rounded-l-none md:rounded-r input input-sm"
-                  // value={startDate || ""}
-                  // onChange={(e) => setStartDate(e.target.value)}
+                  value={startDate || ""}
+                  onChange={(e) => setStartDate(e.target.value)}
                 />
               </label>
             </fieldset>
@@ -48,8 +99,8 @@ export function SalesSummary() {
                 <input
                   type="date"
                   className="join-item rounded-l md:rounded-l-none md:rounded-r input input-sm"
-                  // value={endDate || ""}
-                  // onChange={(e) => setEndDate(e.target.value)}
+                  value={endDate || ""}
+                  onChange={(e) => setEndDate(e.target.value)}
                 />
               </label>
             </fieldset>
@@ -60,40 +111,52 @@ export function SalesSummary() {
         <div className="bg-white shadow-md rounded-xl p-4 md:p-6 mb-2">
           <h4 className="text-sm text-gray-500">Revenue</h4>
           <p className="text-xl md:text-2xl font-semibold text-green-600">
-            Rp 5.000.000
+            {isLoadRevenue
+              ? "0"
+              : formatCurrency(dataRevenue?.totalRevenue) || "0"}
           </p>
         </div>
         <div className="flex flex-col md:flex-row gap-2 justify-between">
-          <div className="flex flex-row w-full md:w-1/2 rounded-box border border-base-content/5 bg-base-100">
+          <div className="flex flex-row w-full md:w-1/3 rounded-box border border-base-content/5 bg-base-100">
             <table className="table w-full table-sm table-zebra">
               <tbody>
                 <tr>
                   <td className="font-bold text-lg">Revenue</td>
-                  <td className="font-bold text-lg">Rp 5.000.000</td>
+                  <td className="font-bold text-lg">
+                    {isLoadRevenue
+                      ? "0"
+                      : formatCurrency(dataRevenue?.totalRevenue) || "0"}
+                  </td>
                 </tr>
-                <tr>
-                  <td className="font-medium">General</td>
-                  <td>Rp 5.000.000</td>
-                </tr>
-                <tr>
-                  <td className="font-medium">Sindang</td>
-                  <td>Rp 5.000.000</td>
-                </tr>
-                <tr>
-                  <td className="font-medium">Karangsembung</td>
-                  <td>Rp 5.000.000</td>
-                </tr>
+                {isLoadRevenue
+                  ? ""
+                  : dataRevenue?.customerIncludeRevenue.map(
+                      ({ customer, total_amount }, index) => (
+                        <tr key={index}>
+                          <td className="font-medium">{customer.name}</td>
+                          <td>{formatCurrency(parseInt(total_amount))}</td>
+                        </tr>
+                      )
+                    )}
                 <tr>
                   <td className="font-medium">Total Items Sold</td>
-                  <td>124</td>
+                  <td>
+                    {isLoadRevenue ? "0" : dataRevenue?.totalItemSold || "0"}
+                  </td>
                 </tr>
                 <tr>
                   <td className="font-medium">Total Transactions</td>
-                  <td>42</td>
+                  <td>
+                    {isLoadRevenue ? "0" : dataRevenue?.totalTransaction || "0"}
+                  </td>
                 </tr>
                 <tr>
                   <td className="font-medium">Avg. Transaction</td>
-                  <td>Rp 119.000</td>
+                  <td>
+                    {isLoadRevenue
+                      ? "0"
+                      : formatCurrency(dataRevenue?.average) || "0"}
+                  </td>
                 </tr>
                 <tr>
                   <td colSpan={2}></td>
@@ -103,25 +166,40 @@ export function SalesSummary() {
                     Sales By Transaction Type
                   </td>
                 </tr>
-                <tr>
-                  <td className="font-medium">Grosir</td>
-                  <td>Rp 119.000</td>
-                </tr>
-                <tr>
-                  <td className="font-medium">MA Grup</td>
-                  <td>Rp 119.000</td>
-                </tr>
+                {isLoadRevenue
+                  ? ""
+                  : dataRevenue?.salesByTransactionType.map(
+                      ({ transactionType, total_amount }, index) => (
+                        <tr key={index}>
+                          <td className="font-medium">
+                            {transactionType.name}
+                          </td>
+                          <td>{formatCurrency(parseInt(total_amount))}</td>
+                        </tr>
+                      )
+                    )}
               </tbody>
             </table>
           </div>
 
-          <div className="w-full md:w-1/2 rounded-box border border-base-content/5 bg-base-100">
+          <div className="w-full md:w-2/3 rounded-box border border-base-content/5 bg-base-100">
             <div className="p-2 flex justify-between">
               <h2 className="text-lg font-bold w-full">Top Customers</h2>
-              <select defaultValue="Pick a color" className="select select-sm">
-                <option>All</option>
-                <option>Grosir</option>
-                <option>MA</option>
+              <select
+                className="select select-sm"
+                value={typeId}
+                onChange={(e) => {
+                  setTypeId(e.target.value);
+                  mutate(customerKey);
+                }}
+              >
+                <option value="">All</option>
+                {!isLoadType &&
+                  dataType.map((item, index) => (
+                    <option key={index} value={item.id}>
+                      {item.name}
+                    </option>
+                  ))}
               </select>
             </div>
             <table className="table w-full table-sm table-zebra">
@@ -129,30 +207,40 @@ export function SalesSummary() {
                 <tr>
                   <th>#</th>
                   <th>Store</th>
+                  <th>Type</th>
+                  <th className="text-center">Include Revenue</th>
                   <th>Total</th>
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td>1</td>
-                  <td className="font-medium">INDAH MA</td>
-                  <td>Rp 119.000</td>
-                </tr>
-                <tr>
-                  <td>2</td>
-                  <td className="font-medium">INDAH MA</td>
-                  <td>Rp 119.000</td>
-                </tr>
-                <tr>
-                  <td>3</td>
-                  <td className="font-medium">INDAH MA</td>
-                  <td>Rp 119.000</td>
-                </tr>
-                <tr>
-                  <td>4</td>
-                  <td className="font-medium">INDAH MA</td>
-                  <td>Rp 119.000</td>
-                </tr>
+                {isLoadCustomer ? (
+                  <LoadingTable row="5" colspan="5" />
+                ) : (
+                  dataCustomer?.map(
+                    (
+                      { name, include_revenue, transactionType, total_amount },
+                      index
+                    ) => (
+                      <tr key={index}>
+                        <td>{index + 1}</td>
+                        <td className="font-medium">{name}</td>
+                        <td>
+                          <div className="badge badge-soft badge-neutral badge-xs">
+                            {transactionType.name}
+                          </div>
+                        </td>
+                        <td>
+                          {include_revenue === 1 ? (
+                            <CheckCircle className="h-4 w-4 text-success mx-auto" />
+                          ) : (
+                            ""
+                          )}
+                        </td>
+                        <td>{formatCurrency(parseInt(total_amount))}</td>
+                      </tr>
+                    )
+                  )
+                )}
               </tbody>
             </table>
           </div>
