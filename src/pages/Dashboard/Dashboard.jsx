@@ -1,18 +1,10 @@
 import React, { useState } from "react";
 import { Box, ChartNoAxesCombined, Receipt, TrendingUp } from "lucide-react";
 import api from "@/utils/api";
-import {
-  LoadingDashboard,
-  DonutChart,
-  AreaChart,
-  BarChart,
-  ColumnChart,
-} from "../../components";
+import { AreaChart, BarChart } from "../../components";
 import dayjs from "dayjs"; // Core Day.js
 import utc from "dayjs/plugin/utc"; // Plugin UTC
 import timezone from "dayjs/plugin/timezone"; // Plugin Timezone
-import { Link } from "react-router-dom";
-import useSWRImmutable from "swr/immutable";
 import useSWR, { useSWRConfig } from "swr";
 
 // Extend plugins ke Day.js
@@ -228,7 +220,6 @@ export function Dashboard() {
         </div>
       </div>
     </div>
-    // <LoadingDashboard />
   );
 }
 
