@@ -21,6 +21,8 @@ dayjs.extend(timezone);
 
 export function Dashboard() {
   const { mutate } = useSWRConfig();
+  const [rangeAreaChart, setRangeAreaChart] = useState("7");
+  const [rangeBarChart, setRangeBarChart] = useState("7");
   const today = dayjs();
   const [dateFilter, setDateFilter] = useState("last7days");
   const [startDate, setStartDate] = useState(
@@ -79,6 +81,18 @@ export function Dashboard() {
     }
   };
 
+  const fetcher = async (url) => {
+    try {
+      const response = await api.get(url);
+
+      console.log(response.data.data);
+
+      return response.data.data;
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   const {
     data: dataCard,
     error: errCard,
@@ -87,7 +101,23 @@ export function Dashboard() {
     revalidateOnFocus: false,
   });
 
-  if (errCard) return <p>Error loading data.</p>;
+  const {
+    data: dataAreaChart,
+    error: errAreaChart,
+    isLoading: isLoadAreaChart,
+  } = useSWR(`/reports/transaction-trend?range=${rangeAreaChart}`, fetcher, {
+    revalidateOnFocus: false,
+  });
+
+  const {
+    data: dataBarChart,
+    error: errBarChart,
+    isLoading: isLoadBarChart,
+  } = useSWR(`/reports/top-selling?range=${rangeBarChart}`, fetcher, {
+    revalidateOnFocus: false,
+  });
+
+  if (errCard || errAreaChart || errBarChart) return <p>Error loading data.</p>;
 
   return (
     <div>
@@ -150,21 +180,28 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-2">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-2">
         <div className="mb-4 bg-white border border-gray-300 rounded-xl shadow-md p-4">
           <div className="flex justify-between items-center">
             <h2 className="font-semibold mb-2">Transaction Trend</h2>
             <label className="swap swap-rotate bg-primary text-white p-4 py-1 rounded">
               <input
                 type="checkbox"
-                // checked={!patient6Month} // Jika "checked", berarti 12 bulan
-                // onChange={() => setPatient6Month(!patient6Month)}
+                checked={rangeAreaChart === "7"}
+                onChange={() =>
+                  setRangeAreaChart(rangeAreaChart == "7" ? "30" : "7")
+                }
               />
-              <div className="text-xs swap-on">Last 30 Days</div>
-              <div className="text-xs swap-off">Last 7 Days</div>
+              <div className="text-xs swap-on">Last 7 Days</div>
+              <div className="text-xs swap-off">Last 30 Days</div>
             </label>
           </div>
-          <AreaChart />
+          {!isLoadAreaChart && (
+            <AreaChart
+              series={dataAreaChart?.series}
+              labels={dataAreaChart?.labels}
+            />
+          )}
         </div>
 
         <div className="mb-4 bg-white border border-gray-300 rounded-xl shadow-md p-4">
@@ -173,29 +210,23 @@ export function Dashboard() {
             <label className="swap swap-rotate bg-primary text-white p-4 py-1 rounded">
               <input
                 type="checkbox"
-                // checked={!medicalRecord6Month} // Jika "checked", berarti 12 bulan
-                // onChange={() => setMedicalRecord6Month(!medicalRecord6Month)}
+                checked={rangeBarChart === "7"}
+                onChange={() =>
+                  setRangeBarChart(rangeBarChart == "7" ? "30" : "7")
+                }
               />
-              <div className="text-xs swap-on">Last 30 Days</div>
-              <div className="text-xs swap-off">Last 7 Days</div>
+              <div className="text-xs swap-on">Last 7 Days</div>
+              <div className="text-xs swap-off">Last 30 Days</div>
             </label>
           </div>
-          <BarChart />
+          {!isLoadAreaChart && (
+            <BarChart
+              series={dataBarChart?.series}
+              labels={dataBarChart?.labels}
+            />
+          )}
         </div>
       </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-        <div className="mb-4 bg-white border border-gray-300 rounded-xl shadow-md p-4">
-          <h2 className="font-semibold mb-2">Payment Method</h2>
-          <ColumnChart />
-        </div>
-        <div className="mb-4 bg-white border border-gray-300 rounded-xl shadow-md p-4">
-          <h2 className="font-semibold mb-2">Sales by Category</h2>
-          <div className="flex justify-center items-center">
-            <DonutChart />
-          </div>
-        </div>
-      </div> */}
     </div>
     // <LoadingDashboard />
   );

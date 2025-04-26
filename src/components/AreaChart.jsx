@@ -3,16 +3,7 @@ import Chart from "react-apexcharts";
 
 export function AreaChart({ series, labels }) {
   const areaChartData = {
-    series: [
-      {
-        name: "Grosir",
-        data: [1000, 1231, 2342, 2349, 3121],
-      },
-      {
-        name: "MA Grup",
-        data: [2343, 2342, 1231, 3121, 2349],
-      },
-    ],
+    series: series,
     options: {
       chart: {
         height: 350,
@@ -37,7 +28,7 @@ export function AreaChart({ series, labels }) {
       stroke: {
         curve: "smooth",
       },
-      labels: ["01-01", "02-01", "03-01", "04-01", "05-01"],
+      labels: labels,
       legend: {
         horizontalAlign: "left",
       },
