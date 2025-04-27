@@ -204,6 +204,29 @@ export function SalesSummary() {
                 </tr>
                 <tr>
                   <td className="font-bold text-lg" colSpan={2}>
+                    Sales By Payment Method{" "}
+                    <span className="text-xs font-normal text-gray-500">
+                      (Include Revenue)
+                    </span>
+                  </td>
+                </tr>
+                {isLoadRevenue
+                  ? ""
+                  : dataRevenue?.salesByPaymentMethod.map(
+                      ({ payment_method, total_amount }, index) => (
+                        <tr key={index}>
+                          <td className="font-medium capitalize">
+                            {payment_method}
+                          </td>
+                          <td>{formatCurrency(parseInt(total_amount))}</td>
+                        </tr>
+                      )
+                    )}
+                <tr>
+                  <td colSpan={2}></td>
+                </tr>
+                <tr>
+                  <td className="font-bold text-lg" colSpan={2}>
                     Sales By Transaction Type
                   </td>
                 </tr>
