@@ -22,8 +22,10 @@ import {
   ChartPie,
   Settings,
   CircleUser,
+  ShoppingBag,
 } from "lucide-react";
 import { Navigate } from "react-router-dom";
+import { Retails } from "@/pages/Retails";
 
 const routes = [
   {
@@ -144,6 +146,14 @@ const routes = [
         roles: ["admin", "user"],
       },
     ],
+  },
+  {
+    name: "Retails",
+    path: "/retails",
+    icon: <ShoppingBag className="h-4 w-4" />,
+    component: Retails,
+    showInMenu: true,
+    roles: ["admin"],
   },
   {
     name: "Settings",
