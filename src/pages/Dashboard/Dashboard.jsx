@@ -136,7 +136,7 @@ export function Dashboard() {
           <div>
             <h3 className="text-sm font-semibold mb-2">Revenue</h3>
             <p className="text-lg font-bold">
-              {isLoadCard ? "Rp 0,00" : formatCurrency(dataCard.totalRevenue)}
+              {isLoadCard ? "Rp 0,00" : formatCurrency(dataCard?.totalRevenue)}
             </p>
           </div>
           <TrendingUp className="w-5 h-5 opacity-75" />
@@ -145,7 +145,7 @@ export function Dashboard() {
           <div>
             <h3 className="text-sm font-semibold mb-2">Avg. Sale Value</h3>
             <p className="text-lg font-bold">
-              {isLoadCard ? "Rp 0,00" : formatCurrency(dataCard.average)}
+              {isLoadCard ? "Rp 0,00" : formatCurrency(dataCard?.average)}
             </p>
           </div>
           <ChartNoAxesCombined className="w-5 h-5 opacity-75" />
@@ -154,7 +154,7 @@ export function Dashboard() {
           <div>
             <h3 className="text-sm font-semibold mb-2">Total Item Sold</h3>
             <p className="text-lg font-bold">
-              {(isLoadCard ? "0" : dataCard.totalItemSold) || "0"}
+              {(isLoadCard ? "0" : dataCard?.totalItemSold) || "0"}
             </p>
           </div>
           <Box className="w-5 h-5 opacity-75" />
@@ -163,7 +163,7 @@ export function Dashboard() {
           <div>
             <h3 className="text-sm font-semibold mb-2">Total Transaction</h3>
             <p className="text-lg font-bold">
-              {(isLoadCard ? "0" : dataCard.totalTransaction) || "0"}
+              {(isLoadCard ? "0" : dataCard?.totalTransaction) || "0"}
             </p>
           </div>
           <Receipt className="w-5 h-5 opacity-75" />
