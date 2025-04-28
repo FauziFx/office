@@ -6,7 +6,7 @@ export function BarChart({ series, labels }) {
     series: [
       {
         name: "",
-        data: series,
+        data: series || [],
       },
     ],
     options: {
@@ -39,7 +39,7 @@ export function BarChart({ series, labels }) {
         enabled: false,
       },
       xaxis: {
-        categories: labels,
+        categories: labels || [],
       },
     },
   };
