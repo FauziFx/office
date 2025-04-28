@@ -339,6 +339,7 @@ export function Customers() {
                 name="transactionTypeId"
                 value={dataCustomer.transactionTypeId}
                 onChange={(e) => handleChange(e)}
+                required
               >
                 <option value="">Select Transaction Type</option>
                 {!isLoading &&
