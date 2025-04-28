@@ -17,6 +17,15 @@ export function SalesSummary() {
     new Date().toISOString().split("T")[0]
   );
 
+  // Query string berdasarkan filter
+  const query = new URLSearchParams({});
+  if (typeId) query.append("typeId", typeId);
+  if (startDate) query.append("startDate", startDate);
+  const adjustedEndDate = new Date(endDate);
+  adjustedEndDate.setDate(adjustedEndDate.getDate() + 1);
+  const finalEndDate = adjustedEndDate.toISOString().split("T")[0];
+  if (endDate) query.append("endDate", finalEndDate);
+
   const handleDateFilter = (e) => {
     const value = e.target.value;
     const today = dayjs();
@@ -26,33 +35,44 @@ export function SalesSummary() {
       case "today":
         setStartDate(today.format("YYYY-MM-DD"));
         setEndDate(today.format("YYYY-MM-DD"));
+        mutate(
+          `/reports/summary?startDate=${today.format(
+            "YYYY-MM-DD"
+          )}&endDate=${today.format("YYYY-MM-DD")}`
+        );
         break;
       case "yesterday":
         const yesterday = today.subtract(1, "day");
         setStartDate(yesterday.format("YYYY-MM-DD"));
         setEndDate(yesterday.format("YYYY-MM-DD"));
+        mutate(
+          `/reports/summary?startDate=${yesterday.format(
+            "YYYY-MM-DD"
+          )}&endDate=${yesterday.format("YYYY-MM-DD")}`
+        );
         break;
       case "last7days":
         setStartDate(today.subtract(6, "day").format("YYYY-MM-DD"));
         setEndDate(today.format("YYYY-MM-DD"));
+        mutate(
+          `/reports/summary?startDate=${today
+            .subtract(6, "day")
+            .format("YYYY-MM-DD")}&endDate=${today.format("YYYY-MM-DD")}`
+        );
         break;
       case "thismonth":
         setStartDate(today.startOf("month").format("YYYY-MM-DD"));
         setEndDate(today.format("YYYY-MM-DD"));
+        mutate(
+          `/reports/summary?startDate=${today
+            .startOf("month")
+            .format("YYYY-MM-DD")}&endDate=${today.format("YYYY-MM-DD")}`
+        );
         break;
       default:
         break;
     }
   };
-
-  // Query string berdasarkan filter
-  const query = new URLSearchParams({});
-  if (typeId) query.append("typeId", typeId);
-  if (startDate) query.append("startDate", startDate);
-  const adjustedEndDate = new Date(endDate);
-  adjustedEndDate.setDate(adjustedEndDate.getDate() + 1);
-  const finalEndDate = adjustedEndDate.toISOString().split("T")[0];
-  if (endDate) query.append("endDate", finalEndDate);
 
   const revenueKey = `/reports/summary?${query.toString()}`;
   const customerKey = `/reports/top-customers?${query.toString()}`;
@@ -124,7 +144,10 @@ export function SalesSummary() {
                   type="date"
                   className="join-item rounded-l md:rounded-l-none md:rounded-r input input-sm"
                   value={startDate || ""}
-                  onChange={(e) => setStartDate(e.target.value)}
+                  onChange={(e) => {
+                    setStartDate(e.target.value);
+                    setDateFilter("");
+                  }}
                 />
               </label>
             </fieldset>
@@ -141,7 +164,10 @@ export function SalesSummary() {
                   type="date"
                   className="join-item rounded-l md:rounded-l-none md:rounded-r input input-sm"
                   value={endDate || ""}
-                  onChange={(e) => setEndDate(e.target.value)}
+                  onChange={(e) => {
+                    setEndDate(e.target.value);
+                    setDateFilter("");
+                  }}
                 />
               </label>
             </fieldset>
@@ -154,7 +180,9 @@ export function SalesSummary() {
           <p className="text-xl md:text-2xl font-semibold text-green-600">
             {isLoadRevenue
               ? "0"
-              : formatCurrency(dataRevenue?.totalRevenue) || "0"}
+              : formatCurrency(
+                  dataRevenue?.totalRevenue + dataRevenue?.totalRetail
+                ) || 0}
           </p>
         </div>
         <div className="flex flex-col md:flex-row gap-2 justify-between">
@@ -166,7 +194,9 @@ export function SalesSummary() {
                   <td className="font-bold text-lg">
                     {isLoadRevenue
                       ? "0"
-                      : formatCurrency(dataRevenue?.totalRevenue) || "0"}
+                      : formatCurrency(
+                          dataRevenue?.totalRevenue + dataRevenue?.totalRetail
+                        ) || 0}
                   </td>
                 </tr>
                 {isLoadRevenue
@@ -179,6 +209,16 @@ export function SalesSummary() {
                         </tr>
                       )
                     )}
+                <tr>
+                  <td className="font-medium">Retails / Eceran</td>
+                  <td>
+                    {isLoadRevenue
+                      ? "0"
+                      : formatCurrency(
+                          parseInt(dataRevenue?.totalRetail || "0")
+                        )}
+                  </td>
+                </tr>
                 <tr>
                   <td className="font-medium">Total Items Sold</td>
                   <td>
