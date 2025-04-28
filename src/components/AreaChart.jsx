@@ -1,7 +1,7 @@
 import React from "react";
 import Chart from "react-apexcharts";
 
-export function AreaChart({ series, labels }) {
+export function AreaChart({ series = [], labels = [] }) {
   const areaChartData = {
     series: series,
     options: {
