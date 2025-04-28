@@ -77,8 +77,6 @@ export function Dashboard() {
     try {
       const response = await api.get(url);
 
-      console.log(response.data.data);
-
       return response.data.data;
     } catch (error) {
       console.log(error);
