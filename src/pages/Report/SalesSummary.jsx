@@ -186,7 +186,7 @@ export function SalesSummary() {
           </p>
         </div>
         <div className="flex flex-col md:flex-row gap-2 justify-between">
-          <div className="flex flex-row w-full md:w-1/3 rounded-box border border-base-content/5 bg-base-100">
+          <div className="w-full md:w-1/3 rounded-box border border-base-content/5 bg-base-100">
             <table className="table w-full table-sm table-zebra">
               <tbody>
                 <tr>
