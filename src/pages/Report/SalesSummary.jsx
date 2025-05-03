@@ -187,7 +187,7 @@ export function SalesSummary() {
         </div>
         <div className="flex flex-col md:flex-row gap-2 justify-between">
           <div className="w-full md:w-1/3 rounded-box border border-base-content/5 bg-base-100">
-            <table className="table w-full table-sm table-zebra">
+            <table className="table w-full table-xs md:table-sm table-zebra">
               <tbody>
                 <tr>
                   <td className="font-bold text-lg">Revenue</td>
@@ -306,47 +306,54 @@ export function SalesSummary() {
                   ))}
               </select>
             </div>
-            <table className="table w-full table-sm table-zebra">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Store</th>
-                  <th>Type</th>
-                  <th className="text-center">Include Revenue</th>
-                  <th>Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {isLoadCustomer ? (
-                  <LoadingTable row="5" colspan="5" />
-                ) : (
-                  dataCustomer?.map(
-                    (
-                      { name, include_revenue, transactionType, total_amount },
-                      index
-                    ) => (
-                      <tr key={index}>
-                        <td>{index + 1}</td>
-                        <td className="font-medium">{name}</td>
-                        <td>
-                          <div className="badge badge-soft badge-neutral badge-xs">
-                            {transactionType.name}
-                          </div>
-                        </td>
-                        <td>
-                          {include_revenue === 1 ? (
-                            <CheckCircle className="h-4 w-4 text-success mx-auto" />
-                          ) : (
-                            ""
-                          )}
-                        </td>
-                        <td>{formatCurrency(parseInt(total_amount))}</td>
-                      </tr>
+            <div className="overflow-x-auto">
+              <table className="table table-xs md:table-sm w-full min-w-[320px] table-auto table-zebra">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Store</th>
+                    <th>Type</th>
+                    <th className="text-center">Include Revenue</th>
+                    <th>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {isLoadCustomer ? (
+                    <LoadingTable row="5" colspan="5" />
+                  ) : (
+                    dataCustomer?.map(
+                      (
+                        {
+                          name,
+                          include_revenue,
+                          transactionType,
+                          total_amount,
+                        },
+                        index
+                      ) => (
+                        <tr key={index}>
+                          <td>{index + 1}</td>
+                          <td className="font-medium">{name}</td>
+                          <td>
+                            <div className="badge badge-soft badge-neutral badge-xs">
+                              {transactionType.name}
+                            </div>
+                          </td>
+                          <td>
+                            {include_revenue === 1 ? (
+                              <CheckCircle className="h-4 w-4 text-success mx-auto" />
+                            ) : (
+                              ""
+                            )}
+                          </td>
+                          <td>{formatCurrency(parseInt(total_amount))}</td>
+                        </tr>
+                      )
                     )
-                  )
-                )}
-              </tbody>
-            </table>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
