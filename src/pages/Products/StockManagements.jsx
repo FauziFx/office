@@ -230,9 +230,7 @@ export function StockManagements() {
                       {item.product.categories?.name}
                     </p>
                   </td>
-                  <td className="border-b border-gray-200">
-                    {item.variantName}
-                  </td>
+                  <td className="border-b border-gray-200">{item.name}</td>
                   <td className="border-b border-gray-200">{item.stock}</td>
                   <td className="border-b border-gray-200">
                     {item.stock > 0 ? (
